@@ -1,0 +1,74 @@
+{
+  "_instructions": [
+    "Copy this file to ~/.claude/settings.json (or merge it into your existing one).",
+    "Replace every <ROOT> placeholder with the absolute path to your workspace root.",
+    "Replace <YOUR-TRACKER-HUB-PATH> with the absolute path to your tracker hub (on a single-repo start this is simply <ROOT>/Claude).",
+    "The Stop hook passes the write-back gate its two paths via env vars on the command line - filling THIS file configures that gate completely; the script-level placeholders are a backstop only.",
+    "The git gate printf message names YOUR hard lines - replace <YOUR-HARD-LINES> with",
+    "  the push and commit constraints that apply in your workspace.",
+    "The hooks block is the governance wiring; preference settings regenerate from use.",
+    "The git gate's command detection is grep-based and best-effort - a speed bump, not a security boundary; pair it with permission rules for anything that must be impossible.",
+    "Remove the _instructions key before deploying."
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(git -C <YOUR-TRACKER-HUB-PATH> push:*)",
+      "Bash(git -C <ROOT> push:*)"
+    ],
+    "additionalDirectories": ["<ROOT>"]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat '<ROOT>/STANDARDS/INDEX.md' 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node <ROOT>/hooks/intake-nudge.mjs"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "WRITEBACK_HUB='<YOUR-TRACKER-HUB-PATH>' WRITEBACK_ROOT='<ROOT>' node <ROOT>/hooks/writeback-gate.mjs"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); cmd=$(echo \"$input\" | grep -oE '\"command\":\"[^\"]*' | head -1); if echo \"$cmd\" | grep -qE '(git +(commit|push|tag|merge|rebase|reset --hard|checkout --)|--amend|--force)' && ! echo \"$cmd\" | grep -q 'CLAUDE_REVIEWED'; then printf '<YOUR-HARD-LINES>\\nRe-issue with the CLAUDE_REVIEWED=1 prefix (PowerShell: $env:CLAUDE_REVIEWED=1; git ...).\\n' >&2; exit 2; fi"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node <ROOT>/hooks/style-gate.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}
