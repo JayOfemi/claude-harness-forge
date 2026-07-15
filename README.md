@@ -46,9 +46,9 @@ The parts above and the path one request travels through them, end to end, are l
 
 The Forge is built for Claude Code. The enforcement is a Claude Code hook pack wired through `settings.json`, and Claude Code is the runtime it is tested against.
 
-Because the load-bearing rules live in hooks rather than in a persona, the enforcement travels with the files instead of with a prompt. That portability is a property of the design, not a support claim. Claude Code is what the Forge supports.
+Because the load-bearing rules live in hooks rather than in a persona, the enforcement travels with the files instead of with a prompt. That portability is a property of the design. Although Claude Code is what the Forge supports, it can likely be easily adapted to work with other models.
 
-## Honest about the limits
+## Honest limits
 
 The Forge keeps an agent inside your rules. It does not make the agent right. Treat it like a car that drives itself: it steers, you stay awake, and you check the work before it ships. It comes as is, MIT licensed, with no support line behind it.
 
