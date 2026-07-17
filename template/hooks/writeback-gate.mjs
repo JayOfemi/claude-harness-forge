@@ -3,11 +3,13 @@
 // Fires AT MOST ONCE per session, and only when the session did real edit
 // work but no tracker write-back is visible (no session-log/tracker change
 // pending or recently committed in the hub, and no Agents/ capture pending or
-// recent in the root for root sessions). On detection: exit 2, which blocks
-// the stop once and feeds the reminder back; the per-session marker plus the
-// stop_hook_active check make a loop impossible. Everything else: silent
-// exit 0. Infra errors degrade to silent pass (the justified quiet-degrade:
-// a broken detector must not trap every session at stop).
+// recent in the root for root sessions). Also carries the load audit: a
+// root-scoped session whose instructions-audit marker never saw the
+// constitution load gets warned at the same stop. On detection: exit 2, which
+// blocks the stop once and feeds the reminder back; the per-session marker
+// plus the stop_hook_active check make a loop impossible. Everything else:
+// silent exit 0. Infra errors degrade to silent pass (the justified
+// quiet-degrade: a broken detector must not trap every session at stop).
 //
 // REQUIRED CONFIGURATION - edit the two lines below before deploying:
 //   WRITEBACK_HUB  absolute path to your tracker hub repo (the one that holds
@@ -101,11 +103,31 @@ const pending = /session_logs\.md|CLAUDE\.md|RoadMap|roadmap/i.test(hubStatus) |
 const hubRecent = git(HUB, `log --since="${SINCE}" --name-only --pretty=format:`) ?? "";
 const rootRecent = git(ROOT, `log --since="${SINCE}" --name-only --pretty=format:`) ?? "";
 const committed = /Logs\/session_logs\.md/.test(hubRecent) || /Agents\//.test(rootRecent);
-if (pending || committed) {
+
+// Constitution-load audit (instructions-audit.mjs marker); silent when the
+// marker is absent, since no marker means the audit hook never ran.
+let missedConstitution = false;
+try {
+	const cwd = String(payload.cwd ?? "").replace(/\\/g, "/").toLowerCase();
+	const rootNorm = ROOT.replace(/\\/g, "/").toLowerCase();
+	const constitution = rootNorm + "/claude.md";
+	const loaded = readFileSync(join(tmpdir(), `instructions-audit-${sessionId}`), "utf8");
+	missedConstitution =
+		cwd.startsWith(rootNorm) &&
+		!loaded.replace(/\\/g, "/").toLowerCase().split("\n").some((l) => l.trim() === constitution);
+} catch {}
+
+let message = "";
+if (!(pending || committed)) {
+	message +=
+		"Write-back check: this session edited files but no tracker write-back is visible (no session-log or capture change, pending or recent). Per the resume-point contract (tracker-format.md), record the sitting and its resume point with a done-when, or state why no write-back applies.\n";
+}
+if (missedConstitution) {
+	message +=
+		"Load audit: this session's instruction loads never included the constitution (your root CLAUDE.md). If startup was skipped or context compacted, re-read the rule layers and confirm the work respects them before closing.\n";
+}
+if (message === "") {
 	process.exit(0);
 }
-
-process.stderr.write(
-	"Write-back check: this session edited files but no tracker write-back is visible (no session-log or capture change, pending or recent). Per the resume-point contract (tracker-format.md), record the sitting and its resume point with a done-when, or state why no write-back applies.\n"
-);
+process.stderr.write(message);
 process.exit(2);
