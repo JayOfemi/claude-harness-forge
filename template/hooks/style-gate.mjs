@@ -73,5 +73,5 @@ if (fails.length === 0) {
 	process.exit(0);
 }
 const lines = fails.slice(0, 5).map((f) => `${f.file}:${f.line}:${f.col} ${f.message}\n    ${f.context}`);
-process.stderr.write(`Style gate: rule violation in the text this edit INTRODUCED. Fix them (pre-existing violations in untouched lines stay).\n${lines.join("\n")}\n`);
+process.stderr.write(`Style gate: rule violations in the text this edit INTRODUCED. Fix them (pre-existing violations in untouched lines stay).\n${lines.join("\n")}\n`);
 process.exit(2);
