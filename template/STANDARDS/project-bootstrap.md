@@ -110,10 +110,12 @@ Skeleton files only. Roadmap and README are placeholders awaiting user direction
 
 ### Step 3: Write workspace pointer
 
-`Projects/{{Codename}}/CLAUDE.md`:
+`Projects/{{Codename}}/CLAUDE.md` - the three-layer form, the same shape the onboarding skill writes (`workspace-layout.md`):
 
 ```markdown
-Read `../../Claude/{{Codename}}/CLAUDE.md` for the project's rules, conventions, and startup protocol. That file is the source of truth - this one is just a pointer. If you cannot find this file, say so in your response.
+DO NOT SIMPLY ACKNOWLEDGE THIS POINTER AND MOVE ON. AT THE START OF EVERY SESSION AND AFTER EVERY COMPACT, READ ALL CONTENT INSIDE THE FILES THIS POINTER POINTS TO.
+
+Read `../../CLAUDE.md` first (the constitution - agent behavior and workspace structure), then `../../Claude/CLAUDE.md` (the craft globals - wording, coding style, commit rules), then `../../Claude/{{Codename}}/CLAUDE.md` for this project's rules, conventions, and startup protocol. All three layers are binding at all times. Those files are the source of truth - this one is just a pointer. If you cannot find any of them, say so in your response.
 ```
 
 ### Step 4: Write repo skeleton
