@@ -16,6 +16,15 @@ The mechanism ships (the adopted switch below, per-task briefing files with the 
 
 **The adopted rails (the switch; dynamic-first)**: routing is DELEGATION-BASED and works from whatever model the user picked for the session - the switch reads the session tier, never sets it, and no seat ever runs above it. Stage work goes to four subagents installed at `~/.claude/agents/` from the template's `subagents/` (`Explore`, `Plan`, `Execute`, `Review`), every seat DYNAMIC by default and resolved when a spawn is about to happen: **every seat lands at or below the session's own tier, always; Plan and Review ride the session tier exactly** (the bookends deserve the strongest model the user is already paying for); Explore resolves to the cheap floor tier (falls back one tier up on tool-heavy prompt-too-long failures, never above the session tier); Execute resolves to the default tier capped at the session tier (callers on stronger sessions pass the default tier at spawn; at or below it, Execute rides the session model). A user pin (`/model-routing set <stage> <model>`) overrides the dynamic rule for that seat verbatim, even above the session tier - an explicit choice is the user's to make. `/model-routing status|dynamic|inherit|set <stage> <model|dynamic>` (the template's `commands/model-routing.md`) reports the seats and this session's resolution, resumes routing per the seat memories, turns routing off, or pins and frees a seat (the seat line in each agent file is the memory). **The posture**: a multi-stage task delegates its stages to these agents; small inline work stays inline; a session already running a strong model may keep its bookends inline (the orchestrator's tier is a bookend tier). **Requested vs effective**: allowlists and availability can silently downgrade a resolution, so the four agents self-report the model they actually ran as, and the logs, not the config, are the truth. `CLAUDE_CODE_SUBAGENT_MODEL` is never the router - it flattens every subagent to one model; emergency cost ceiling only.
 
+The dynamic resolution, illustrated (session model to seats):
+
+| Session | Explore | Plan | Execute | Review |
+|---|---|---|---|---|
+| Haiku | haiku | haiku | haiku | haiku |
+| Sonnet | haiku | sonnet | sonnet | sonnet |
+| Opus | haiku | opus | sonnet | opus |
+| Your strongest tier | haiku | that tier | sonnet | that tier |
+
 **Escalation triggers** (any one moves the work up a tier):
 
 - Rung zero, before any tier move: raise EFFORT first - verification depth tracks effort, and missed-verification failures are effort failures, not capability failures. (Co-tune the axes; a cheap model at max effort is not a substitute for the tier the work needs, and a default model at maximum effort can cost more than the strong tier at default.)
