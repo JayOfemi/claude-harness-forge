@@ -1,6 +1,6 @@
 # The Forge
 
-A governance layer for Claude Code. Blocking enforcement hooks, a routed standards bank, and multi-project trackers with resume points. Free, MIT.
+A governance layer for Claude Code. Blocking enforcement hooks, a routed standards bank, multi-project trackers with resume points, model routing that sends each stage of work to the right tier, and a token counter that reports what every turn cost. Free, MIT.
 
 Download and a full walkthrough live at **[forge.jayofemi.com](https://forge.jayofemi.com)**.
 
@@ -21,7 +21,8 @@ The Forge is files. There is no server, no background process, and no account. C
 | The standards bank | `STANDARDS/` | One file per "how we do X", each behind one routing line in `INDEX.md`. Sessions read the index every time and open only the one or two standards the task touches |
 | Project trackers | `Claude/<Project>/` | Per-project memory: a bible of facts and decisions, plus a session log where every sitting ends with a resume point |
 | The roles | `Agents/AGENT_ROLES.md` | Charters for a council (a chair, a skeptic, a treasurer) and staff you summon by name to stress-test plans or keep the workspace clean |
-| The hooks | `hooks/` + your settings file | The enforcement layer: a session-start index injector, a style gate that lints only newly introduced text, an intake nudge, a write-back gate, and a git gate carrying your hard lines |
+| The hooks | `hooks/` + your settings file | The enforcement layer: a session-start index injector, a style gate that lints only newly introduced text, an intake nudge, a write-back gate, a git gate carrying your hard lines, a config tripwire, a load audit, a reply gate that bounces bloated answers with the word count, and a token reporter plus handoff pair that surface what every turn cost |
+| The routing seats | `subagents/` + `commands/` | Four pinned subagents that send each stage of work to the right model tier (cheap exploration, strong planning and review, default execution), and the `/model-routing` command that flips them between tiered and inherit |
 | The tools | `tools/` + `skills/` | The onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, and a workspace composer for multi-repo setups |
 
 ## Quickstart
@@ -32,7 +33,7 @@ From zero to a governed workspace with your first project onboarded, about five 
 2. **Wire the harness.** Copy the hook wiring from `.claude-settings-template.json` into your `~/.claude/settings.json` and replace the `<ROOT>` placeholders with your real path. The hooks already sit at your root from step 1, which is where the wiring points; they take effect from your next session.
 3. **Fill the two rule surfaces.** The craft globals at `Claude/CLAUDE.md` ship as a shell with `<YOUR-*>` sections. A complete worked example is in `examples/`.
 4. **Name your roles.** `Agents/AGENT_ROLES.md` ships with the full council and staff charters; give each a persona name. A named persona binds a session to its charter better than a job title does.
-5. **Install the onboarding skill.** Copy `skills/forge-onboard/` into `~/.claude/skills/`.
+5. **Install the harness pieces.** Copy `skills/forge-onboard/` into `~/.claude/skills/`, the four files in `subagents/` into `~/.claude/agents/`, and `commands/model-routing.md` into `~/.claude/commands/`.
 6. **Onboard your first project.** Paste the project into `Projects/<Name>/<repo>/`, open a session at your root, and say "onboard `<Name>`". The skill scans the code read-only, drafts the project's bible from what the code shows, creates the tracker, and ends with an editable summary for you to correct. It will not restyle anything in your code; that is the layer's headline rule.
 
 ## How it works
