@@ -14,7 +14,7 @@ This layer is files. There is no server, no background process, no install beyon
 | Project trackers | `Claude/<Project>/` | Per-project memory, a bible of facts and rules (what the project is, what is decided) plus a session log where every sitting ends with a resume point |
 | The roles | `Agents/AGENT_ROLES.md` | Charters for a council (a chair, a skeptic, a treasurer) and staff (housekeeper, attendant, scout) you can summon by name to stress-test plans or keep the workspace clean |
 | The hooks | `hooks/` + your settings file | The enforcement layer, made of a session-start injector for the index, a style gate that lints only newly introduced text, an intake nudge, a write-back gate that reminds a closing session to record itself, a git gate carrying your hard lines, a config tripwire that announces settings changes mid-session, a load audit that confirms a session actually read the constitution, a reply gate that bounces a bloated final reply once with the word count, and a token reporter plus handoff pair that surface what every turn cost |
-| The tools | `tools/` + `skills/` + `subagents/` + `commands/` | The onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, the workspace composer for multi-repo setups, and the model-routing seats with the `/model-routing` switch that flips them |
+| The tools | `tools/` + `skills/` + `subagents/` + `commands/` | The onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, the workspace composer for multi-repo setups, and the dynamic model-routing seats with the `/model-routing` switch that reports, pins, or frees them |
 
 ## One ask, end to end
 

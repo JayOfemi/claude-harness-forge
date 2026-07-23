@@ -22,7 +22,7 @@ The Forge is files. There is no server, no background process, and no account. C
 | Project trackers | `Claude/<Project>/` | Per-project memory: a bible of facts and decisions, plus a session log where every sitting ends with a resume point |
 | The roles | `Agents/AGENT_ROLES.md` | Charters for a council (a chair, a skeptic, a treasurer) and staff you summon by name to stress-test plans or keep the workspace clean |
 | The hooks | `hooks/` + your settings file | The enforcement layer: a session-start index injector, a style gate that lints only newly introduced text, an intake nudge, a write-back gate, a git gate carrying your hard lines, a config tripwire, a load audit, a reply gate that bounces bloated answers with the word count, and a token reporter plus handoff pair that surface what every turn cost |
-| The routing seats | `subagents/` + `commands/` | Four pinned subagents that send each stage of work to the right model tier (cheap exploration, strong planning and review, default execution), and the `/model-routing` command that flips them between tiered and inherit |
+| The routing seats | `subagents/` + `commands/` | Four subagents, dynamic by default: nothing runs above your session's own tier, planning and review ride it exactly, exploration stays on the cheap floor, execution runs capped at it. The `/model-routing` command reports the seats, pins any of them to a fixed model, or frees them back to dynamic |
 | The tools | `tools/` + `skills/` | The onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, and a workspace composer for multi-repo setups |
 
 ## Quickstart

@@ -16,7 +16,7 @@ A file-based governance layer for agent sessions. One root folder holds a consti
 
 4. **Name your roles** (optional now, worth doing soon). `Agents/AGENT_ROLES.md` ships with the full council and staff charters; give each a persona name from fiction you love. A named persona binds a session to its charter better than a job title does.
 
-5. **Install the harness pieces.** From your new root, copy `skills/forge-onboard/` into `~/.claude/skills/` (the front door for every project you bring in), the four files in `subagents/` into `~/.claude/agents/` (the model-routing seats: cheap exploration, strong planning and review, default execution), and `commands/model-routing.md` into `~/.claude/commands/` (the switch that flips those seats between tiered and inherit). The copies at your root remain the source mirrors.
+5. **Install the harness pieces.** From your new root, copy `skills/forge-onboard/` into `~/.claude/skills/` (the front door for every project you bring in), the four files in `subagents/` into `~/.claude/agents/` (the model-routing seats, dynamic by default: nothing runs above your session's tier, planning and review ride it exactly, sweeps stay cheap), and `commands/model-routing.md` into `~/.claude/commands/` (the switch that reports, pins, or frees those seats). The copies at your root remain the source mirrors.
 
 6. **Onboard your first project.** Paste or clone the project into `Projects/<Name>/<repo>/`. Open an agent session at your root and say: "onboard `<Name>`". The skill scans the code read-only, drafts the project's bible from what the code actually shows, creates the tracker and the workspace pointer, registers the repo in the composition manifest, and ends with an editable summary for you to correct. It will not restyle or "clean up" anything in your code; that is the layer's headline rule.
 
@@ -30,7 +30,7 @@ A file-based governance layer for agent sessions. One root folder holds a consti
 - A session opened in your project's folder reads the three rule layers and lands on the bible's resume point.
 - A long-winded final reply (over 300 words of prose) is blocked once at stop with the word count; the compressed resend passes.
 - After a turn that cost tokens, either a `Tokens this turn:` system line appears (hosts that render it) or the next reply ends with a `Tokens last turn:` line (the handoff hook covering hosts that do not).
-- `/model-routing status` reports four seats (haiku exploration, opus planning and review, sonnet execution) once the agents are installed.
+- `/model-routing status` reports four dynamic seats once the agents are installed: cheap exploration, planning and review riding your session's own model, execution capped at it.
 
 ## Where to go next
 
