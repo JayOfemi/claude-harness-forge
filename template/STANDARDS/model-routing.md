@@ -6,7 +6,7 @@ when_to_read: Choosing a model or effort tier for a session, subagent, or delega
 
 # Model routing - which tier does which work
 
-The mechanism exists (model-override subagents, per-task briefing files with the model named at the top); this is the policy. The principle: **strong models on the bookends, default models in the middle, cheap models on the mechanical** - quality concentrates where judgment lives (framing the work and judging the work), not where the keystrokes happen.
+The mechanism ships (the adopted switch below, per-task briefing files with the model named at the top); this is the policy. The principle: **strong models on the bookends, default models in the middle, cheap models on the mechanical** - quality concentrates where judgment lives (framing the work and judging the work), not where the keystrokes happen.
 
 **Stage defaults**:
 
@@ -14,8 +14,11 @@ The mechanism exists (model-override subagents, per-task briefing files with the
 - **Execution against a clear spec** - the session default (Sonnet-class). Good routing holds most of the strong-model quality at a fraction of the strong-model traffic.
 - **Mechanical, well-specified work** (measurements, mirrors, verbatim moves, single-file checks) - cheap tier (Haiku-class), packaged as a self-contained briefing file with the target model named at the top, a read-first list, exact edits, and a done-means criterion.
 
+**The adopted rails (the switch; delegation-first)**: routing is DELEGATION-BASED and independent of the session model - the session orchestrates on whatever model the user picked (never ask the user to change it), and stage work goes to four pinned subagents installed at `~/.claude/agents/` from the template's `subagents/`: `Explore` (haiku; falls back to sonnet on tool-heavy prompt-too-long failures, never by removing the pin), `Plan` (opus; a user-chosen strong seat), `Execute` (sonnet; spec-driven implementation), `Review` (opus; the final bookend, the other user-chosen strong seat). `/model-routing tiered|inherit|status|set <stage> <model>` (the template's `commands/model-routing.md`) flips the pins, remembers custom seats across the inherit round-trip (the seat line in each agent file is the memory), and reports the position. **The posture**: a multi-stage task in the tiered position delegates its stages to these agents; small inline work stays inline; a session already running a strong model may keep its bookends inline (the orchestrator's tier is a bookend tier). **Requested vs effective**: allowlists and availability can silently downgrade a pin, so the four agents self-report the model they actually ran as, and the logs, not the config, are the truth. `CLAUDE_CODE_SUBAGENT_MODEL` is never the router - it flattens every subagent to one model; emergency cost ceiling only.
+
 **Escalation triggers** (any one moves the work up a tier):
 
+- Rung zero, before any tier move: raise EFFORT first - verification depth tracks effort, and missed-verification failures are effort failures, not capability failures. (Co-tune the axes; a cheap model at max effort is not a substitute for the tier the work needs, and a default model at maximum effort can cost more than the strong tier at default.)
 - A gate failed twice on the same item.
 - The surface is security, money, or data-destroying.
 - Ambiguity survives intent intake (`intent-intake.md`).
@@ -29,7 +32,7 @@ The mechanism exists (model-override subagents, per-task briefing files with the
 - Synthesis happens inline in the owning session by default; a subagent's isolation is context hygiene, not a cost saver (each agent re-pays its own load).
 - Multi-agent orchestration runs only on the operator's explicit opt-in.
 
-**Use the harness's native rails, then layer on top**: the plan-strong/execute-default split ships in the harness (per-subagent model pins) - adopt those rather than hand-rolling. What the harness does NOT do is capability escalation (its automatic switching is availability-driven only), so the escalation triggers above are your own policy layer; a calibrated model-confidence signal, where the harness exposes one, is a stronger escalation trigger than hand-set heuristics. Treat the routing economics as directional and refine them from your own session records.
+**Use the harness's native rails, then layer on top**: per-subagent model pins and same-name overrides of built-in agents ship in the harness - the switch above is built entirely from them, so adopt it rather than hand-rolling. What the harness does NOT do is capability escalation (its automatic switching is availability- and content-driven only), so the escalation triggers above are your own policy layer. Treat the routing economics as directional and refine them from your own session records (the requested-vs-effective self-reports are the data).
 
 **Tuning**: find the cheapest tier that holds the quality for each kind of work, and record any routing choice that deviates from these defaults, with the reason, in the session log.
 

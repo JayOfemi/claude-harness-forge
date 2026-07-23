@@ -13,8 +13,8 @@ This layer is files. There is no server, no background process, no install beyon
 | The standards bank | `STANDARDS/` | The depth. One file per "how we do X", each behind one routing line in `INDEX.md`. Sessions read the index every time and open only the one or two standards the task touches |
 | Project trackers | `Claude/<Project>/` | Per-project memory, a bible of facts and rules (what the project is, what is decided) plus a session log where every sitting ends with a resume point |
 | The roles | `Agents/AGENT_ROLES.md` | Charters for a council (a chair, a skeptic, a treasurer) and staff (housekeeper, attendant, scout) you can summon by name to stress-test plans or keep the workspace clean |
-| The hooks | `hooks/` + your settings file | The enforcement layer, made of a session-start injector for the index, a style gate that lints only newly introduced text, an intake nudge, a write-back gate that reminds a closing session to record itself, a git gate carrying your hard lines, a config tripwire that announces settings changes mid-session, and a load audit that confirms a session actually read the constitution |
-| The tools | `tools/` + `skills/` | The onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, and the workspace composer for multi-repo setups |
+| The hooks | `hooks/` + your settings file | The enforcement layer, made of a session-start injector for the index, a style gate that lints only newly introduced text, an intake nudge, a write-back gate that reminds a closing session to record itself, a git gate carrying your hard lines, a config tripwire that announces settings changes mid-session, a load audit that confirms a session actually read the constitution, a reply gate that bounces a bloated final reply once with the word count, and a token reporter plus handoff pair that surface what every turn cost |
+| The tools | `tools/` + `skills/` + `subagents/` + `commands/` | The onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, the workspace composer for multi-repo setups, and the model-routing seats with the `/model-routing` switch that flips them |
 
 ## One ask, end to end
 
@@ -28,7 +28,7 @@ Here is the path a single request travels. The quickstart's verify list checks t
 
 4. **The work.** The task gets done under the loaded law. The headline rule binds hardest here. Change scope is sacred. Rules and conventions apply to the lines the session writes, and the lines it was not asked to touch stay untouched, even when they break a rule.
 
-5. **The gates.** Mechanical checks run as the work lands, not after. The style gate flags banned text the moment it is introduced and stays silent on everything clean. The git gate stops commands you declared off-limits until the session acknowledges your hard lines. The done-when from intake is the finish line; "looks done" does not count.
+5. **The gates.** Mechanical checks run as the work lands, not after. The style gate flags banned text the moment it is introduced and stays silent on everything clean. The git gate stops commands you declared off-limits until the session acknowledges your hard lines. The reply gate bounces a bloated final reply once, with the exact word count, so answers stay readable; the token reporter prints what the turn cost, and its handoff twin surfaces that number inside the next reply on hosts that hide system output. The done-when from intake is the finish line; "looks done" does not count.
 
 6. **The record.** Before the session closes, it writes down what happened, what was decided, and a resume point saying exactly where things stand. The next session opens cold, reads that record, and continues instead of restarting. This is the difference between forty sessions and one forty-session project.
 

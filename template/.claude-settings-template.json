@@ -7,7 +7,9 @@
     "The Stop hook passes the write-back gate its two paths via env vars on the command line - filling THIS file configures that gate completely; the script-level placeholders are a backstop only.",
     "The git gate lives at hooks/git-gate.mjs and fails closed; open it and replace <YOUR-HARD-LINES> with the push and commit constraints that apply in your workspace.",
     "The env block caps runaway loops. The harness defaults are 200 subagent spawns and 200 web searches per session; the template ships 25 and 50. Raise them per-session for a sanctioned big run ($env:CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION = '100' before launching) instead of raising the standing cap.",
-    "The ask rule on Agent(model:opus) surfaces premium-tier subagent spawns for approval instead of letting them run silently; add one rule per premium tier you pay for.",
+    "The reply gate enforces a prose-length ceiling on each turn's final reply (default 300 words; REPLY_GATE_MAX_WORDS overrides). It blocks once with exact findings, then always passes the revision.",
+    "The token reporter prints each turn's full token spend (subagents included) as a systemMessage line and appends a daily JSONL ledger under ~/.claude/token-ledger/. The token handoff surfaces the previous turn's cost inside the next reply, for hosts that do not render systemMessage output; if your host renders it, the handoff is optional.",
+    "Premium-tier subagent spawns run without an approval prompt by default; add an ask rule (for example Agent(model:opus)) per premium tier if you want one - the env caps below bound the runaway class either way.",
     "The hooks block is the governance wiring; preference settings regenerate from use.",
     "The git gate's command detection is regex-based and best-effort - a speed bump, not a security boundary; pair it with permission rules for anything that must be impossible.",
     "Remove the _instructions key before deploying."
@@ -16,9 +18,6 @@
     "allow": [
       "Bash(git -C <YOUR-TRACKER-HUB-PATH> push:*)",
       "Bash(git -C <ROOT> push:*)"
-    ],
-    "ask": [
-      "Agent(model:opus)"
     ],
     "deny": [
       "Read(//c/Users/<YOUR-USER>/AppData/Roaming/Microsoft/Credentials/**)",
@@ -50,6 +49,10 @@
           {
             "type": "command",
             "command": "node <ROOT>/hooks/intake-nudge.mjs"
+          },
+          {
+            "type": "command",
+            "command": "node <ROOT>/hooks/token-handoff.mjs"
           }
         ]
       }
@@ -60,6 +63,14 @@
           {
             "type": "command",
             "command": "WRITEBACK_HUB='<YOUR-TRACKER-HUB-PATH>' WRITEBACK_ROOT='<ROOT>' node <ROOT>/hooks/writeback-gate.mjs"
+          },
+          {
+            "type": "command",
+            "command": "node <ROOT>/hooks/reply-gate.mjs"
+          },
+          {
+            "type": "command",
+            "command": "node <ROOT>/hooks/token-report.mjs"
           }
         ]
       }

@@ -1,12 +1,20 @@
 ---
 name: source-control
 layer: agnostic
-when_to_read: Branching, versioning, release tagging, or anything about repo mechanics beyond the commit rules themselves
+when_to_read: Committing, branching, versioning, release tagging, or any repo-mechanics question; operator commit specifics stay at the craft globals
 ---
 
-# Source control - branches, versions, tags
+# Source control - commits, branches, versions, tags
 
-> **Master for commit wording + rules: the craft globals** (`Claude/CLAUDE.md`, "Commit rules"). Those rules are NOT restated here. Branch naming and the version and release-tag mechanics are native HERE.
+> Commit-rule kernels and your operator specifics (message style, banned content) live at the craft globals (`Claude/CLAUDE.md`, "Commit rules"); the generic commit depth, branch naming, and the version and release-tag mechanics are native HERE.
+
+## Commits
+
+**Standard**:
+
+- **Write commits for outside readers.** A dev reading `git log` cold has no context on internal tracking docs, chat sessions, or audit numbering - never reference those. No session-referential phrases ("this session", "follow-up on the last change"). Describe what changed and why. Professional and direct, not chatty.
+- **Commit your own completed work in sensible chunks; stage only your own changes by explicit path, never blanket-commit a dirty tree.** The seven small steps of one task are usually one commit, not seven; a genuinely involved step, or a fully isolated one-liner, can stand alone. If unrelated changes are mixed into the tree and you cannot cleanly separate yours, do NOT commit - leave it dirty and say so.
+- **Multi-repo check**: on commit, check every code repo the project spans PLUS its tracker dir, and commit in each that has changes; a tracker-prefix convention (for example `<Name>:` on tracker commits) keeps the hub log readable.
 
 ## Branches
 

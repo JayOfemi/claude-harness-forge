@@ -8,7 +8,7 @@ These rules bind every project in the hub, parent-wins per the constitution's in
 
 ## Startup reading is mandatory
 
-Every session start and after every compaction: read this file, the constitution, and the project's CLAUDE.md **in full** - plus every pointer the project file references and the entire SessionStart hook payload, including any spilled hook output file (the inline preview is not enough). Skim only session logs (last 1-3 `## Session` entries) and `Working/` trackers. The ordered checklist and mechanics: `STANDARDS/session-protocol.md`. Rules and hooks encode what a fresh model cannot infer from source; a skimmed startup ships drift. If you catch yourself thinking "I'll come back to this if needed," stop. Read them.
+Every session start and after every compaction: read this file, the constitution, and the project's CLAUDE.md **in full** - plus every pointer the project file references and the entire SessionStart hook payload, including any spilled hook output file (the inline preview is not enough). Skim only session logs (last 1-3 `## Session` entries) and `Working/` trackers. The ordered checklist and mechanics: `STANDARDS/session-protocol.md`.
 
 ## Behavior rules
 
@@ -28,6 +28,10 @@ Every session start and after every compaction: read this file, the constitution
 ## Audience and text
 
 `<YOUR-WORDING-RULES>` - who reads your shipped text and what never appears in it. This section is the natural home of your style bans; wire the same rules into the style gate's rules file (`hooks/house-rules.mjs`) so the machinery enforces what the prose declares. The example file carries a full, battle-tested set.
+
+## Reply discipline
+
+**Answer first, then stop early.** The direct answer or outcome is the first sentence, stated once. Brevity is the default; write for a cold reader; cut what did not happen; at most one ask per reply, at the end. Depth and the compression pass: `STANDARDS/reply-discipline.md` (ships ready; the reply gate in the hook pack enforces the length ceiling mechanically).
 
 ## Stack defaults
 

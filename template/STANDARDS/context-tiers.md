@@ -41,7 +41,7 @@ Everything an agent might read sits in exactly one of four load tiers. Placement
 - **Skills**: name + description always load (lean descriptions per `skills-and-commands.md`); bodies load on invoke; front-load SKILL.md content (post-compaction keeps each skill's first ~5k tokens under a ~25k shared budget).
 - **Subagents are context hygiene, not cost savings**: they run isolated (the built-in Explore/Plan even skip CLAUDE.md) and only the summary returns, but each agent re-pays its own load (~4x chat tokens per agent, ~15x for multi-agent fan-outs).
 - **Cache economics**: reads ~0.1x base input, writes ~1.25-2x. A stable Tier 1/2 prefix is what makes always-on cheap mid-session; do not fragment Tier 1 across many small files (cache minimum ~1k tokens) and do not churn hook output or tool sets mid-session.
-- **Path-scoped rules** (`.claude/rules/` with `paths:` globs) load only when a matching file is read - the native Tier 3 channel for domain standards. Candidate mechanism, not yet adopted; evaluate per domain before migrating INDEX-routed standards onto it.
+- **Path-scoped rules** (`.claude/rules/` with `paths:` globs) load only when a matching file is read, and drop on compaction like every non-root surface. Evaluated and NOT adopted as this layer's standards channel: globs resolve against each project's own root, so serving a central bank that way means per-project rule copies (against the single-source law), a user-level `~/.claude/rules/` glob would inject rules into workspaces you have deliberately excluded, and the mechanism re-solves routing the INDEX hook already provides. A project MAY still use its own `.claude/rules/` for project-native rules - ordinary child-layer content, not bank distribution.
 
 ## Why fewer, denser rules
 

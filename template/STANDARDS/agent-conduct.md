@@ -6,7 +6,7 @@ when_to_read: Every session start (routed from session-protocol); before any bui
 
 # Agent conduct - what agents do and never do
 
-> **Master for the high-stakes gates: the craft globals** (`Claude/CLAUDE.md`, "Behavior rules" + "Commit rules"). NOT restated here - read them at the master: which repos agents push, whether agents run builds, the commit discipline, and every hard line your git gate names. This file carries only what is native to terminal-and-platform conduct.
+> **Master for the high-stakes gates: the craft globals** (`Claude/CLAUDE.md`, "Behavior rules"). NOT restated here - read them at the master: which repos agents push, whether agents run builds, and every hard line your git gate names. Commit depth lives in `source-control.md`; this file carries only what is native to terminal-and-platform conduct.
 
 **Standard** (native rules; adjust the placeholders to your machine and keep the shapes):
 

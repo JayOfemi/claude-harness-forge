@@ -37,7 +37,7 @@ The runbook for restoring the whole operation on a fresh machine, or auditing wh
 
 ## 4. `~/.claude/settings.json` (verbatim wiring of record)
 
-`<RECORD-YOURS-HERE>` - start from `template/.claude-settings-template.json` (the five-hook wiring: the SessionStart INDEX loader, the pre-tool git gate, the post-edit style gate, the prompt-submit intake nudge, and the Stop write-back gate). Once adapted and deployed, paste the LIVE version here verbatim and keep it current per the maintenance rule.
+`<RECORD-YOURS-HERE>` - start from `.claude-settings-template.json` at your root (the full wiring: the SessionStart INDEX loader; the pre-tool git gate; the post-edit style gate; the prompt-submit intake nudge and token handoff; the Stop write-back gate, reply gate, and token reporter; the config tripwire; the instructions audit). Once adapted and deployed, paste the LIVE version here verbatim and keep it current per the maintenance rule.
 
 ## 5. Hook scripts (verbatim copies of record)
 
@@ -51,3 +51,4 @@ The runbook for restoring the whole operation on a fresh machine, or auditing wh
 4. A gated git operation is blocked BEFORE running; the acknowledged re-issue proceeds.
 5. Only the repos your craft globals name as auto-push are pushable by an agent.
 6. A project session boots via its workspace pointer, reads the three layers, and lands on the bible's resume point.
+7. A final reply over the prose ceiling is blocked once with the word count; after a costed turn the next reply carries the `Tokens last turn:` line (or your host renders the `Tokens this turn:` system line directly).

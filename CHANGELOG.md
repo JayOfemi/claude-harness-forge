@@ -2,6 +2,15 @@
 
 Fork-and-forget support surface: adopters diff against this file to see what changed upstream since their copy.
 
+## 1.2.0
+
+- Hooks: `reply-gate.mjs` added on Stop - a prose-length ceiling on each turn's final reply (default 300 words, `REPLY_GATE_MAX_WORDS` overrides; fenced and inline code stripped first). Blocks once with exact findings, then always passes the revision; quiet-degrades on infra errors. Its standard ships as `STANDARDS/reply-discipline.md`.
+- Hooks: `token-report.mjs` added on Stop - each turn's full token spend (subagents and workflows included) as one systemMessage line, plus a daily JSONL spend ledger under `~/.claude/token-ledger/`. `token-handoff.mjs` added on UserPromptSubmit - surfaces the previous turn's cost inside the next reply, for hosts that do not render Stop-hook systemMessage output; consume-once, so a zero-cost turn never re-injects a stale count. Reporters, never gates.
+- Model routing: the delegation switch ships - four pinned subagent seats (`subagents/`: Explore haiku, Plan opus, Execute sonnet, Review opus) installed to `~/.claude/agents/`, plus the `/model-routing` command (`commands/`) to flip tiered/inherit, re-seat a stage, or report the position. The session model is never part of the switch; each seat self-reports the model it actually ran as. `STANDARDS/model-routing.md` gains the adopted-rails posture and an effort-before-tier escalation rung.
+- Standards: `source-control.md` now carries the generic commit depth natively (outside-reader commits, stage-only-your-own-changes, the multi-repo check); `agent-conduct.md` routes commit depth there; `context-tiers.md` resolves the path-scoped-rules question (not adopted as the bank channel, with reasons; project-native use stays legal). The craft-globals shell gains a Reply discipline kernel and sheds startup coaching prose - the kernel-plus-pointer diet the tier model prescribes, applied to the layer itself.
+- Settings: the `Agent(model:opus)` ask example removed - premium spawns are bounded by the env caps and each seat's self-report line; add your own ask rule per premium tier if you want the prompt back. The new hooks are wired in the settings template's Stop and UserPromptSubmit blocks.
+- Docs: quickstart covers installing the routing seats and command, and its verify list gains the reply-gate, token-line, and routing-status checks; how-it-works' hook and tool rows and its gates walkthrough cover the new pieces; the constitution map gains the harness-install-sources row (`skills/` + `subagents/` + `commands/`); REBUILD's settings record and verification checklist cover the full wiring.
+
 ## 1.1.0
 
 - Hooks: the git gate moves from an inline settings one-liner to `hooks/git-gate.mjs` and now fails closed; an internal error while a git command is in flight blocks by default instead of passing ungated. Plain non-git commands still pass on error.
