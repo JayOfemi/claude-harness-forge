@@ -4,12 +4,18 @@
 # Does the mechanical parts of the quickstart so you do not have to copy paths
 # by hand. It copies the template into your root, initializes git, installs the
 # ~/.claude pieces, and writes a settings.json with your paths already filled
-# in. It changes nothing that only you decide, so your craft rules, your
-# git-gate hard lines, and applying the generated settings stay yours.
-# It is re-runnable and never overwrites an existing ~/.claude/settings.json.
+# in. It changes nothing that only you decide, so your craft rules and your
+# git-gate hard lines stay yours. Re-runnable and careful with an existing
+# ~/.claude: anything it replaces is backed up first to a timestamped folder,
+# and an existing settings.json is MERGED (your settings kept, Forge entries
+# added, every change printed; where a value truly conflicts the Forge value
+# wins and says so).
 #
 #   bash template/tools/setup.sh --root ~/workspace [--force]
 set -euo pipefail
+# bash 5.2+ expands & in unquoted ${var//pat/rep} replacements; a root path
+# containing & would corrupt every generated settings value without this.
+shopt -u patsub_replacement 2>/dev/null || true
 
 say()  { printf '%s\n' "$1"; }
 step() { printf '  %s\n' "$1"; }
@@ -87,22 +93,57 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 
 # 5. Install the harness pieces into ~/.claude (the front door, the routing
-#    seats, and the switch). Source mirrors stay at your root.
+#    seats, and the switch). Source mirrors stay at your root. Never blind:
+#    identical files are skipped, and anything replaced is backed up first.
+BACKUP_DIR="$CLAUDE_DIR/forge-setup-backup-$(date +%Y%m%d-%H%M%S)"
+backup_target() { # <path> <rel>
+	local dest="$BACKUP_DIR/$2"
+	mkdir -p "$(dirname "$dest")"
+	cp -R "$1" "$dest"
+}
 install_dir() { # <src-rel> <dest-sub> <label>
-	local src="$ROOT_ABS/$1" dest="$CLAUDE_DIR/$2"
+	local src="$ROOT_ABS/$1" dest="$CLAUDE_DIR/$2" name target
 	if [ ! -e "$src" ]; then warn "expected $src but it is missing, skipping $3"; return; fi
 	mkdir -p "$dest"
+	name="$(basename "$src")"
+	target="$dest/$name"
+	if [ -e "$target" ]; then
+		if diff -rq "$src" "$target" >/dev/null 2>&1; then
+			step "$3 already current"
+			return
+		fi
+		backup_target "$target" "$2/$name"
+		rm -rf "$target"
+		cp -R "$src" "$dest/"
+		step "replaced $3 (your version is backed up)"
+		return
+	fi
 	cp -R "$src" "$dest/"
 	step "installed $3 to $dest"
 }
 install_md() { # <src-dir-rel> <dest-sub> <label>
-	local srcdir="$ROOT_ABS/$1" dest="$CLAUDE_DIR/$2" f
+	local srcdir="$ROOT_ABS/$1" dest="$CLAUDE_DIR/$2" f base new=0 cur=0 rep=0
 	if [ ! -d "$srcdir" ]; then warn "expected $srcdir but it is missing, skipping $3"; return; fi
 	mkdir -p "$dest"
 	shopt -s nullglob
-	for f in "$srcdir"/*.md; do cp "$f" "$dest/"; done
+	for f in "$srcdir"/*.md; do
+		base="$(basename "$f")"
+		if [ -f "$dest/$base" ]; then
+			if cmp -s "$f" "$dest/$base"; then
+				cur=$((cur+1))
+				continue
+			fi
+			backup_target "$dest/$base" "$2/$base"
+			cp "$f" "$dest/$base"
+			step "replaced $base in $dest (your version is backed up)"
+			rep=$((rep+1))
+			continue
+		fi
+		cp "$f" "$dest/"
+		new=$((new+1))
+	done
 	shopt -u nullglob
-	step "installed $3 to $dest"
+	step "$3 to $dest: $new installed, $cur already current, $rep replaced"
 }
 say ""
 say "Installing the harness pieces into $CLAUDE_DIR"
@@ -120,18 +161,60 @@ if [ ! -f "$TPL" ]; then
 	warn "settings template missing at $TPL, skipping the settings step"
 else
 	content="$(cat "$TPL")"
-	content="${content//<ROOT>/$ROOT_ABS}"
-	content="${content//<YOUR-TRACKER-HUB-PATH>/$ROOT_ABS/Claude}"
-	content="${content//<YOUR-USER>/$USER_NAME}"
+	content="${content//<ROOT>/"$ROOT_ABS"}"
+	content="${content//<YOUR-TRACKER-HUB-PATH>/"$ROOT_ABS/Claude"}"
+	content="${content//<YOUR-USER>/"$USER_NAME"}"
 	GEN="$ROOT_ABS/settings.generated.json"
 	printf '%s\n' "$content" > "$GEN"
 	step "wrote $GEN (paths and user filled in)"
 	GLOBAL="$CLAUDE_DIR/settings.json"
 	if [ -f "$GLOBAL" ]; then
-		step "you already have $GLOBAL, leaving it untouched (merge the hooks, permissions, and env blocks from the generated file into it)"
+		# Merge, never clobber: your settings survive, Forge entries are added,
+		# and a real conflict resolves Forge-wins with a printed CONFLICT line.
+		if ! command -v node >/dev/null 2>&1; then
+			warn "node is missing, so the settings merge was skipped. Merge the hooks, permissions, and env blocks from $GEN into $GLOBAL by hand."
+		else
+			TMP="$ROOT_ABS/settings.merged.tmp.json"
+			if MERGE_OUT="$(node "$ROOT_ABS/tools/merge-settings.mjs" "$GLOBAL" "$GEN" "$TMP" 2>&1)"; then
+				printf '%s\n' "$MERGE_OUT" | while IFS= read -r line; do
+					case "$line" in
+						CONFLICT*) warn "$line" ;;
+						*) step "$line" ;;
+					esac
+				done
+				if cmp -s "$TMP" "$GLOBAL"; then
+					rm -f "$TMP"
+				else
+					backup_target "$GLOBAL" "settings.json"
+					mv "$TMP" "$GLOBAL"
+					step "merged the Forge wiring into $GLOBAL (your original is backed up)"
+				fi
+			else
+				rm -f "$TMP"
+				warn "settings merge failed ($MERGE_OUT). $GLOBAL is left untouched; merge the hooks, permissions, and env blocks from $GEN by hand."
+			fi
+		fi
 	else
 		mkdir -p "$CLAUDE_DIR"
-		printf '%s\n' "$content" > "$GLOBAL"
+		# Fresh writes route through the merge tool too, so _instructions
+		# (setup guidance, not wiring) never lands in a deployed settings file.
+		wrote=0
+		if command -v node >/dev/null 2>&1; then
+			EMPTY="$ROOT_ABS/settings.empty.tmp.json"
+			TMP="$ROOT_ABS/settings.merged.tmp.json"
+			printf '%s\n' "{}" > "$EMPTY"
+			if node "$ROOT_ABS/tools/merge-settings.mjs" "$EMPTY" "$GEN" "$TMP" >/dev/null 2>&1; then
+				mv "$TMP" "$GLOBAL"
+				wrote=1
+			else
+				rm -f "$TMP"
+			fi
+			rm -f "$EMPTY"
+		fi
+		if [ "$wrote" -eq 0 ]; then
+			printf '%s\n' "$content" > "$GLOBAL"
+			warn "wrote the settings as-is; delete the _instructions key from it after reading"
+		fi
 		step "wrote $GLOBAL (you had none). Review it, then it takes effect from your next session"
 	fi
 fi
@@ -139,15 +222,19 @@ fi
 # 7. Print what only you can finish.
 say ""
 say "Done with the mechanical parts. What is left for you:"
-say "  1. Settings: review settings.generated.json in your root. If you already had"
-say "     a ~/.claude/settings.json, merge its hooks, permissions, and env blocks in."
-say "     You can delete the _instructions key once you have read it."
+say "  1. Settings: review ~/.claude/settings.json (written or merged above; any"
+say "     CONFLICT lines show where a Forge value replaced yours). The Forge-only"
+say "     reference copy is settings.generated.json in your root."
 say "  2. Hard lines: open hooks/git-gate.mjs at your root and replace <YOUR-HARD-LINES>"
 say "     with the git operations an agent must never do alone."
 say "  3. Craft rules: fill the <YOUR-*> sections in Claude/CLAUDE.md. A worked"
 say "     example lives in the examples/ folder from the download (beside template/)."
 say "  4. Roles: name the personas in Agents/AGENT_ROLES.md (optional now)."
 say "  5. Never-publish list: seed deny-list.txt with your names, employer, and paths."
+if [ -d "$BACKUP_DIR" ]; then
+	say ""
+	say "Everything replaced was backed up first: $BACKUP_DIR"
+fi
 say ""
 say "Then open a NEW session at your root and say: onboard <YourProject>"
 say "Hooks load at session start, so the wiring takes effect from your next session, not this shell."

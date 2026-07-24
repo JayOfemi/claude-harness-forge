@@ -37,7 +37,7 @@ You need Claude Code, git, and Node.js on your PATH (the enforcement hooks are s
 
 It copies the template into your root, initializes git, installs the `~/.claude` pieces, and drafts your settings for you to apply. No command line.
 
-**Or run one command.** A setup helper does the same mechanical steps and prints what is left.
+**Or run one command.** A setup helper does the same mechanical steps and prints what is left. It is safe around an existing `~/.claude`: anything it replaces is backed up first, and an existing `settings.json` is merged rather than overwritten, with every change printed.
 
 Windows (PowerShell), and if it is blocked, prefix with `powershell -ExecutionPolicy Bypass -File`:
 

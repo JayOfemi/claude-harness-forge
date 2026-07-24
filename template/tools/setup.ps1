@@ -8,9 +8,11 @@
   by hand. It copies the template into your root, initializes git, installs the
   ~/.claude pieces, and writes a settings.json with your paths already filled
   in (forward slashes, so the JSON is valid). It changes nothing that only you
-  decide, so your craft rules, your git-gate hard lines, and applying the
-  generated settings stay yours. It is re-runnable and never overwrites an
-  existing ~/.claude/settings.json.
+  decide, so your craft rules and your git-gate hard lines stay yours.
+  Re-runnable and careful with an existing ~/.claude: anything it replaces is
+  backed up first to a timestamped folder, and an existing settings.json is
+  MERGED (your settings kept, Forge entries added, every change printed;
+  where a value truly conflicts the Forge value wins and says so).
 
 .PARAMETER Root
   The workspace root to create or set up (for example C:/Workspace). Forward
@@ -119,8 +121,23 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
 }
 
 # 5. Install the harness pieces into ~/.claude (the front door, the routing
-#    seats, and the switch). Source mirrors stay at your root.
+#    seats, and the switch). Source mirrors stay at your root. Never blind:
+#    identical files are skipped, and anything replaced is backed up first.
 $ClaudeDir = Join-Path $HOME ".claude"
+$script:BackupDir = Join-Path $ClaudeDir ("forge-setup-backup-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+$script:BackedUp = $false
+function BackupTarget([string]$path, [string]$rel) {
+	$dest = Join-Path $script:BackupDir $rel
+	New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dest) | Out-Null
+	Copy-Item -LiteralPath $path -Destination $dest -Recurse -Force
+	$script:BackedUp = $true
+}
+function FileHash([string]$path) { (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash }
+function TreeSig([string]$path) {
+	(Get-ChildItem -Recurse -File -LiteralPath $path | Sort-Object FullName | ForEach-Object {
+		"$($_.FullName.Substring($path.Length))=$(FileHash $_.FullName)"
+	}) -join ";"
+}
 function InstallDir([string]$srcRel, [string]$destSub, [string]$label) {
 	$src = Join-Path $RootAbs $srcRel
 	if (-not (Test-Path -LiteralPath $src)) {
@@ -129,6 +146,18 @@ function InstallDir([string]$srcRel, [string]$destSub, [string]$label) {
 	}
 	$dest = Join-Path $ClaudeDir $destSub
 	New-Item -ItemType Directory -Force -Path $dest | Out-Null
+	$target = Join-Path $dest (Split-Path -Leaf $src)
+	if (Test-Path -LiteralPath $target) {
+		if ((TreeSig $src) -eq (TreeSig $target)) {
+			Step "$label already current"
+			return
+		}
+		BackupTarget $target "$destSub/$(Split-Path -Leaf $src)"
+		Remove-Item -Recurse -Force -LiteralPath $target
+		Copy-Item -LiteralPath $src -Destination $dest -Recurse -Force
+		Step "replaced $label (your version is backed up)"
+		return
+	}
 	Copy-Item -LiteralPath $src -Destination $dest -Recurse -Force
 	Step "installed $label to $dest"
 }
@@ -140,10 +169,26 @@ function InstallFiles([string]$srcRel, [string]$destSub, [string]$label) {
 	}
 	$dest = Join-Path $ClaudeDir $destSub
 	New-Item -ItemType Directory -Force -Path $dest | Out-Null
+	$new = 0
+	$current = 0
+	$replaced = 0
 	Get-ChildItem -LiteralPath $srcDir -Filter *.md | ForEach-Object {
+		$destFile = Join-Path $dest $_.Name
+		if (Test-Path -LiteralPath $destFile) {
+			if ((FileHash $destFile) -eq (FileHash $_.FullName)) {
+				$current += 1
+				return
+			}
+			BackupTarget $destFile "$destSub/$($_.Name)"
+			Copy-Item -LiteralPath $_.FullName -Destination $destFile -Force
+			Step "replaced $($_.Name) in $dest (your version is backed up)"
+			$replaced += 1
+			return
+		}
 		Copy-Item -LiteralPath $_.FullName -Destination $dest -Force
+		$new += 1
 	}
-	Step "installed $label to $dest"
+	Step "$label to ${dest}: $new installed, $current already current, $replaced replaced"
 }
 Say ""
 Say "Installing the harness pieces into $ClaudeDir"
@@ -170,10 +215,61 @@ if (-not (Test-Path -LiteralPath $tpl)) {
 	Step "wrote $generated (paths and user filled in)"
 	$globalSettings = Join-Path $ClaudeDir "settings.json"
 	if (Test-Path -LiteralPath $globalSettings) {
-		Step "you already have $globalSettings, leaving it untouched (merge the hooks, permissions, and env blocks from the generated file into it)"
+		# Merge, never clobber: your settings survive, Forge entries are added,
+		# and a real conflict resolves Forge-wins with a printed CONFLICT line.
+		if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+			Warn "node is missing, so the settings merge was skipped. Merge the hooks, permissions, and env blocks from $generated into $globalSettings by hand."
+		} else {
+			$mergeTool = Join-Path $RootAbs "tools/merge-settings.mjs"
+			$tmp = Join-Path $RootAbs "settings.merged.tmp.json"
+			$prevEap = $ErrorActionPreference
+			$ErrorActionPreference = "Continue"
+			$mergeOut = & node $mergeTool $globalSettings $generated $tmp
+			$mergeFailed = $LASTEXITCODE -ne 0
+			$ErrorActionPreference = $prevEap
+			if ($mergeFailed -or -not (Test-Path -LiteralPath $tmp)) {
+				if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }
+				Warn "settings merge failed; $globalSettings is left untouched. Merge the hooks, permissions, and env blocks from $generated by hand."
+			} else {
+				foreach ($line in @($mergeOut)) {
+					if ("$line".StartsWith("CONFLICT")) { Warn "$line" } else { Step "$line" }
+				}
+				if ((FileHash $tmp) -eq (FileHash $globalSettings)) {
+					Remove-Item -LiteralPath $tmp -Force
+				} else {
+					BackupTarget $globalSettings "settings.json"
+					Move-Item -LiteralPath $tmp -Destination $globalSettings -Force
+					Step "merged the Forge wiring into $globalSettings (your original is backed up)"
+				}
+			}
+		}
 	} else {
 		New-Item -ItemType Directory -Force -Path $ClaudeDir | Out-Null
-		[System.IO.File]::WriteAllText($globalSettings, $text, $utf8NoBom)
+		# Fresh writes route through the merge tool too, so _instructions
+		# (setup guidance, not wiring) never lands in a deployed settings file.
+		$wrote = $false
+		if (Get-Command node -ErrorAction SilentlyContinue) {
+			$mergeTool = Join-Path $RootAbs "tools/merge-settings.mjs"
+			$empty = Join-Path $RootAbs "settings.empty.tmp.json"
+			$tmp = Join-Path $RootAbs "settings.merged.tmp.json"
+			[System.IO.File]::WriteAllText($empty, "{}", $utf8NoBom)
+			$prevEap = $ErrorActionPreference
+			$ErrorActionPreference = "Continue"
+			$null = & node $mergeTool $empty $generated $tmp
+			$mergeFailed = $LASTEXITCODE -ne 0
+			$ErrorActionPreference = $prevEap
+			Remove-Item -LiteralPath $empty -Force
+			if (-not $mergeFailed -and (Test-Path -LiteralPath $tmp)) {
+				Move-Item -LiteralPath $tmp -Destination $globalSettings -Force
+				$wrote = $true
+			} elseif (Test-Path -LiteralPath $tmp) {
+				Remove-Item -LiteralPath $tmp -Force
+			}
+		}
+		if (-not $wrote) {
+			[System.IO.File]::WriteAllText($globalSettings, $text, $utf8NoBom)
+			Warn "wrote the settings as-is; delete the _instructions key from it after reading"
+		}
 		Step "wrote $globalSettings (you had none). Review it, then it takes effect from your next session"
 	}
 }
@@ -181,15 +277,19 @@ if (-not (Test-Path -LiteralPath $tpl)) {
 # 7. Print what only you can finish.
 Say ""
 Say "Done with the mechanical parts. What is left for you:"
-Say "  1. Settings: review settings.generated.json in your root. If you already had"
-Say "     a ~/.claude/settings.json, merge its hooks, permissions, and env blocks in."
-Say "     You can delete the _instructions key once you have read it."
+Say "  1. Settings: review ~/.claude/settings.json (written or merged above; any"
+Say "     CONFLICT lines show where a Forge value replaced yours). The Forge-only"
+Say "     reference copy is settings.generated.json in your root."
 Say "  2. Hard lines: open hooks/git-gate.mjs at your root and replace <YOUR-HARD-LINES>"
 Say "     with the git operations an agent must never do alone."
 Say "  3. Craft rules: fill the <YOUR-*> sections in Claude/CLAUDE.md. A worked"
 Say "     example lives in the examples/ folder from the download (beside template/)."
 Say "  4. Roles: name the personas in Agents/AGENT_ROLES.md (optional now)."
 Say "  5. Never-publish list: seed deny-list.txt with your names, employer, and paths."
+if ($script:BackedUp) {
+	Say ""
+	Say "Everything replaced was backed up first: $script:BackupDir"
+}
 Say ""
 Say "Then open a NEW session at your root and say: onboard <YourProject>"
 Say "Hooks load at session start, so the wiring takes effect from your next session, not this shell."

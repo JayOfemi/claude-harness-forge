@@ -47,9 +47,9 @@ Swap `C:/Workspace` or `~/workspace` for wherever you want your root to live. Wh
 - Copies the template into your root, so the constitution `CLAUDE.md` sits at the top.
 - Runs `git init -b main` and makes the first commit.
 - Installs the harness pieces into `~/.claude` (the onboarding skill, the four model-routing seats, the `/model-routing` command).
-- Writes a `settings.generated.json` into your root with your paths and user already filled in, using forward slashes so the JSON is valid. If you have no `~/.claude/settings.json` yet, it writes one there too; if you already have one, it leaves it alone for you to merge.
+- Writes a `settings.generated.json` into your root with your paths and user already filled in, using forward slashes so the JSON is valid. If you have no `~/.claude/settings.json` yet, it writes one there too. If you already have one, it MERGES the Forge wiring into it: everything of yours stays, new entries are added, and where a value truly conflicts the Forge value wins and the script prints exactly what changed.
 
-The helper then prints your remaining steps, which are the same ones in [Fill your rules](#fill-your-rules). It never overwrites an existing settings file, and you can re-run it safely.
+The helper then prints your remaining steps, which are the same ones in [Fill your rules](#fill-your-rules). It is safe around an existing `~/.claude`: identical files are skipped, and anything it replaces (including your settings file before a merge) is backed up first to a timestamped folder it names in its output. Re-running it is safe.
 
 ## Let the agent set it up
 
