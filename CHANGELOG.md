@@ -2,6 +2,12 @@
 
 Fork-and-forget support surface: adopters diff against this file to see what changed upstream since their copy.
 
+## Unreleased
+
+- Setup: `tools/setup.ps1` (Windows) and `tools/setup.sh` (macOS/Linux) added, a one-command helper that copies the template into your root, initializes git, installs the `~/.claude` pieces, and writes a settings file with your paths already filled in (forward slashes, so the JSON stays valid). It never overwrites an existing `~/.claude/settings.json`, and it is re-runnable.
+- Docs: the quickstart is reorganized around three setup paths (let the agent do it, run one command, or by hand). It gains an agent-facing setup procedure for the first path and a path-safety note for the last (use forward slashes in the JSON settings, quote paths with spaces), so hand-setup stops breaking on Windows.
+- Docs: how-it-works notes the setup helper is a convenience that moves files into place, not a runtime.
+
 ## 1.2.0
 
 - Hooks: `reply-gate.mjs` added on Stop - a prose-length ceiling on each turn's final reply (default 300 words, `REPLY_GATE_MAX_WORDS` overrides; fenced and inline code stripped first). Blocks once with exact findings, then always passes the revision; quiet-degrades on infra errors. Its standard ships as `STANDARDS/reply-discipline.md`.

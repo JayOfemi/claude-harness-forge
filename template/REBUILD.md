@@ -17,7 +17,7 @@ The runbook for restoring the whole operation on a fresh machine, or auditing wh
 1. Install git, Node, ripgrep; install your agent harness and log in.
 2. Recreate the shape: clone the root repo, clone the hub INTO it at `Claude/` (a nested repo the root gitignores), clone project repos into `Projects/<Name>/<repo>/` per each tracker's bible. Or: clone the root repo and drive the rest from the manifest.
 3. Recreate `~/.claude/settings.json` from section 4; the hook scripts come back with the root repo clone at `<ROOT>/hooks/` (section 5).
-4. Restore skills and commands from their source mirrors (name where yours live).
+4. Restore skills and commands from their source mirrors (name where yours live). The setup helper (`tools/setup.ps1` or `setup.sh`) re-installs these from a root if you would rather not copy them by hand.
 5. Machine-specific state, per project bible: `<YOUR-MACHINE-STATE>` (drive mappings, tool installs, git identities).
 6. Run the verification checklist (section 6).
 

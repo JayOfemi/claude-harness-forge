@@ -1,0 +1,195 @@
+#Requires -Version 5.1
+<#
+.SYNOPSIS
+  One-command setup for this governance layer on Windows (PowerShell).
+
+.DESCRIPTION
+  Does the mechanical parts of the quickstart so you do not have to copy paths
+  by hand. It copies the template into your root, initializes git, installs the
+  ~/.claude pieces, and writes a settings.json with your paths already filled
+  in (forward slashes, so the JSON is valid). It changes nothing that only you
+  decide, so your craft rules, your git-gate hard lines, and applying the
+  generated settings stay yours. It is re-runnable and never overwrites an
+  existing ~/.claude/settings.json.
+
+.PARAMETER Root
+  The workspace root to create or set up (for example C:/Workspace). Forward
+  or back slashes both work.
+
+.PARAMETER Force
+  Allow setup into a folder that already has files but is not a Forge root.
+
+.EXAMPLE
+  .\template\tools\setup.ps1 -Root C:/Workspace
+#>
+param(
+	[Parameter(Mandatory = $true)]
+	[string]$Root,
+	[switch]$Force
+)
+
+$ErrorActionPreference = "Stop"
+
+function Say([string]$m) { Write-Host $m }
+function Step([string]$m) { Write-Host "  $m" }
+function Warn([string]$m) { Write-Host "WARNING: $m" -ForegroundColor Yellow }
+function Die([string]$m) { Write-Host "STOPPED: $m" -ForegroundColor Red; exit 1 }
+
+# 1. Resolve the template dir (the parent of this tools/ folder) and the root.
+$TemplateDir = Split-Path -Parent $PSScriptRoot
+if (-not (Test-Path -LiteralPath (Join-Path $TemplateDir "CLAUDE.md"))) {
+	Die "cannot find the template next to this script (expected $TemplateDir/CLAUDE.md). Run this script from where you extracted the download."
+}
+if (-not [System.IO.Path]::IsPathRooted($Root)) {
+	$Root = Join-Path (Get-Location).Path $Root
+}
+$RootAbs = [System.IO.Path]::GetFullPath($Root)
+$RootFwd = $RootAbs -replace "\\", "/"
+$HubFwd = "$RootFwd/Claude"
+# The deny paths key on the profile-folder name (C:\Users\<leaf>), which is not
+# always the login name; prefer the profile leaf, with fallbacks.
+$User = if ($env:USERPROFILE) { Split-Path -Leaf $env:USERPROFILE } elseif ($env:USERNAME) { $env:USERNAME } else { "user" }
+
+Say "Forge setup"
+Say "  template: $TemplateDir"
+Say "  root:     $RootAbs"
+Say ""
+
+# 2. Guard the root. An existing Forge root is fine (we re-install and refresh
+#    settings); a non-empty non-Forge folder needs -Force so nothing is buried.
+$RootExists = Test-Path -LiteralPath $RootAbs
+# A real Forge root carries several markers, not just any CLAUDE.md, so an
+# unrelated project that happens to have a CLAUDE.md is not mistaken for one
+# (which would skip the copy and leave a half-installed workspace).
+$AlreadyForge = $RootExists `
+	-and (Test-Path -LiteralPath (Join-Path $RootAbs "CLAUDE.md")) `
+	-and (Test-Path -LiteralPath (Join-Path $RootAbs "STANDARDS/INDEX.md")) `
+	-and (Test-Path -LiteralPath (Join-Path $RootAbs ".claude-settings-template.json"))
+if (-not $RootExists) {
+	New-Item -ItemType Directory -Force -Path $RootAbs | Out-Null
+} elseif (-not $AlreadyForge) {
+	$hasFiles = (Get-ChildItem -Force -LiteralPath $RootAbs | Measure-Object).Count -gt 0
+	if ($hasFiles -and -not $Force) {
+		Die "$RootAbs is not empty and has no Forge constitution. Re-run with -Force to set up here anyway, or pick an empty folder."
+	}
+}
+
+# 3. Copy the template contents into the root (constitution lands at the root).
+if ($AlreadyForge) {
+	Step "root is already a Forge, refreshing the harness pieces and settings without re-copying (your filled-in files stay)"
+} else {
+	Step "copying the template into the root"
+	Get-ChildItem -Force -LiteralPath $TemplateDir | ForEach-Object {
+		Copy-Item -LiteralPath $_.FullName -Destination $RootAbs -Recurse -Force
+	}
+}
+
+# 4. Initialize git and make the first commit (best effort; a missing git or an
+#    unset identity is a warning, never a stop).
+$git = Get-Command git -ErrorAction SilentlyContinue
+if (-not $git) {
+	Warn "git was not found, skipping repo init. Install git, then run 'git init -b main' in your root."
+} elseif (Test-Path -LiteralPath (Join-Path $RootAbs ".git")) {
+	Step "git repo already present, leaving it as is"
+} else {
+	Step "initializing the git repo"
+	# git writes progress to stderr, which under the Stop preference would wrap as
+	# a terminating error and abort setup. Relax it for this block and read exit codes.
+	$prevEap = $ErrorActionPreference
+	$ErrorActionPreference = "Continue"
+	git -C $RootAbs init -b main *> $null
+	if ($LASTEXITCODE -ne 0) {
+		# Older git without -b: fall back to init then rename the branch.
+		git -C $RootAbs init *> $null
+		git -C $RootAbs branch -M main *> $null
+	}
+	git -C $RootAbs add -A *> $null
+	git -C $RootAbs commit -m "Initial Forge workspace" *> $null
+	$commitFailed = $LASTEXITCODE -ne 0
+	$ErrorActionPreference = $prevEap
+	if ($commitFailed) {
+		Warn "could not create the first commit (is your git user.name and user.email set?). Commit yourself later with: git -C `"$RootAbs`" commit -m `"Initial Forge workspace`""
+	}
+}
+
+# The enforcement hooks are Node scripts, so warn now if Node is missing rather
+# than let every gate silently no-op at session time.
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+	Warn "Node.js was not found on your PATH. The enforcement hooks are small Node scripts, so install Node.js (nodejs.org) before your next session or they will not run."
+}
+
+# 5. Install the harness pieces into ~/.claude (the front door, the routing
+#    seats, and the switch). Source mirrors stay at your root.
+$ClaudeDir = Join-Path $HOME ".claude"
+function InstallDir([string]$srcRel, [string]$destSub, [string]$label) {
+	$src = Join-Path $RootAbs $srcRel
+	if (-not (Test-Path -LiteralPath $src)) {
+		Warn "expected $src but it is missing, skipping $label"
+		return
+	}
+	$dest = Join-Path $ClaudeDir $destSub
+	New-Item -ItemType Directory -Force -Path $dest | Out-Null
+	Copy-Item -LiteralPath $src -Destination $dest -Recurse -Force
+	Step "installed $label to $dest"
+}
+function InstallFiles([string]$srcRel, [string]$destSub, [string]$label) {
+	$srcDir = Join-Path $RootAbs $srcRel
+	if (-not (Test-Path -LiteralPath $srcDir)) {
+		Warn "expected $srcDir but it is missing, skipping $label"
+		return
+	}
+	$dest = Join-Path $ClaudeDir $destSub
+	New-Item -ItemType Directory -Force -Path $dest | Out-Null
+	Get-ChildItem -LiteralPath $srcDir -Filter *.md | ForEach-Object {
+		Copy-Item -LiteralPath $_.FullName -Destination $dest -Force
+	}
+	Step "installed $label to $dest"
+}
+Say ""
+Say "Installing the harness pieces into $ClaudeDir"
+InstallDir   "skills/forge-onboard" "skills"   "the onboarding skill"
+InstallFiles "subagents"            "agents"   "the model-routing seats"
+InstallFiles "commands"             "commands" "the /model-routing command"
+
+# 6. Pre-fill the settings file with your paths (forward slashes keep the JSON
+#    valid) and your OS user. Written to the root as settings.generated.json;
+#    also written to ~/.claude/settings.json only if you do not have one yet.
+Say ""
+Say "Preparing your settings"
+$tpl = Join-Path $RootAbs ".claude-settings-template.json"
+if (-not (Test-Path -LiteralPath $tpl)) {
+	Warn "settings template missing at $tpl, skipping the settings step"
+} else {
+	$text = Get-Content -Raw -LiteralPath $tpl
+	$text = $text.Replace("<ROOT>", $RootFwd)
+	$text = $text.Replace("<YOUR-TRACKER-HUB-PATH>", $HubFwd)
+	$text = $text.Replace("<YOUR-USER>", $User)
+	$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+	$generated = Join-Path $RootAbs "settings.generated.json"
+	[System.IO.File]::WriteAllText($generated, $text, $utf8NoBom)
+	Step "wrote $generated (paths and user filled in)"
+	$globalSettings = Join-Path $ClaudeDir "settings.json"
+	if (Test-Path -LiteralPath $globalSettings) {
+		Step "you already have $globalSettings, leaving it untouched (merge the hooks, permissions, and env blocks from the generated file into it)"
+	} else {
+		New-Item -ItemType Directory -Force -Path $ClaudeDir | Out-Null
+		[System.IO.File]::WriteAllText($globalSettings, $text, $utf8NoBom)
+		Step "wrote $globalSettings (you had none). Review it, then it takes effect from your next session"
+	}
+}
+
+# 7. Print what only you can finish.
+Say ""
+Say "Done with the mechanical parts. What is left for you:"
+Say "  1. Settings: review settings.generated.json in your root. If you already had"
+Say "     a ~/.claude/settings.json, merge its hooks, permissions, and env blocks in."
+Say "     You can delete the _instructions key once you have read it."
+Say "  2. Hard lines: open hooks/git-gate.mjs at your root and replace <YOUR-HARD-LINES>"
+Say "     with the git operations an agent must never do alone."
+Say "  3. Craft rules: fill the <YOUR-*> sections in Claude/CLAUDE.md. A worked"
+Say "     example lives in the examples/ folder from the download (beside template/)."
+Say "  4. Roles: name the personas in Agents/AGENT_ROLES.md (optional now)."
+Say "  5. Never-publish list: seed deny-list.txt with your names, employer, and paths."
+Say ""
+Say "Then open a NEW session at your root and say: onboard <YourProject>"
+Say "Hooks load at session start, so the wiring takes effect from your next session, not this shell."

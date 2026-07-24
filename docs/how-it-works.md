@@ -14,7 +14,7 @@ This layer is files. There is no server, no background process, no install beyon
 | Project trackers | `Claude/<Project>/` | Per-project memory, a bible of facts and rules (what the project is, what is decided) plus a session log where every sitting ends with a resume point |
 | The roles | `Agents/AGENT_ROLES.md` | Charters for a council (a chair, a skeptic, a treasurer) and staff (housekeeper, attendant, scout) you can summon by name to stress-test plans or keep the workspace clean |
 | The hooks | `hooks/` + your settings file | The enforcement layer, made of a session-start injector for the index, a style gate that lints only newly introduced text, an intake nudge, a write-back gate that reminds a closing session to record itself, a git gate carrying your hard lines, a config tripwire that announces settings changes mid-session, a load audit that confirms a session actually read the constitution, a reply gate that bounces a bloated final reply once with the word count, and a token reporter plus handoff pair that surface what every turn cost |
-| The tools | `tools/` + `skills/` + `subagents/` + `commands/` | The onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, the workspace composer for multi-repo setups, and the dynamic model-routing seats with the `/model-routing` switch that reports, pins, or frees them |
+| The tools | `tools/` + `skills/` + `subagents/` + `commands/` | A one-command setup helper, the onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, the workspace composer for multi-repo setups, and the dynamic model-routing seats with the `/model-routing` switch that reports, pins, or frees them |
 
 The routing seats resolve against the session's own model, never above it. Unless you pin a seat, the resolution is:
 
@@ -52,5 +52,5 @@ Here is the path a single request travels. The quickstart's verify list checks t
 ## What it is not
 
 - Not a model, an agent, or a product subscription. It runs on whatever agent harness you already use.
-- Not an installer or a daemon. Copying the folders is the install; deleting them is the uninstall.
+- Not an installer or a daemon. Copying the folders is the install; deleting them is the uninstall. A setup helper ships that can do the copying for you, but it is a convenience that moves files into place, not a runtime; nothing runs in the background.
 - Not a style opinion. The mechanisms ship neutral; the opinions live in clearly marked example files you replace with your own (`customize-first.md` is the replacement order).

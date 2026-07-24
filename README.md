@@ -23,18 +23,37 @@ The Forge is files. There is no server, no background process, and no account. C
 | The roles | `Agents/AGENT_ROLES.md` | Charters for a council (a chair, a skeptic, a treasurer) and staff you summon by name to stress-test plans or keep the workspace clean |
 | The hooks | `hooks/` + your settings file | The enforcement layer: a session-start index injector, a style gate that lints only newly introduced text, an intake nudge, a write-back gate, a git gate carrying your hard lines, a config tripwire, a load audit, a reply gate that bounces bloated answers with the word count, and a token reporter plus handoff pair that surface what every turn cost |
 | The routing seats | `subagents/` + `commands/` | Four subagents, dynamic by default: nothing runs above your session's own tier, planning and review ride it exactly, exploration stays on the cheap floor, execution runs capped at it. The `/model-routing` command reports the seats, pins any of them to a fixed model, or frees them back to dynamic |
-| The tools | `tools/` + `skills/` | The onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, and a workspace composer for multi-repo setups |
+| The tools | `tools/` + `skills/` | A one-command setup helper, the onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, and a workspace composer for multi-repo setups |
 
-## Quickstart
+## Get set up
 
-From zero to a governed workspace with your first project onboarded, about five minutes of your attention plus one agent session. The full version is in [`docs/quickstart.md`](docs/quickstart.md).
+From zero to a governed workspace with your first project onboarded in about five minutes. Three ways to do it, from least effort to most control. The full walkthrough, including what each path leaves for you to decide, is in [`docs/quickstart.md`](docs/quickstart.md).
 
-1. **Create your root.** Pick a folder to hold everything, copy the contents of `template/` into it so the constitution `CLAUDE.md` sits at the root, then `git init -b main` and make the first commit.
-2. **Wire the harness.** Copy the hook wiring from `.claude-settings-template.json` into your `~/.claude/settings.json` and replace the `<ROOT>` placeholders with your real path. The hooks already sit at your root from step 1, which is where the wiring points; they take effect from your next session.
-3. **Fill the two rule surfaces.** The craft globals at `Claude/CLAUDE.md` ship as a shell with `<YOUR-*>` sections. A complete worked example is in `examples/`.
-4. **Name your roles.** `Agents/AGENT_ROLES.md` ships with the full council and staff charters; give each a persona name. A named persona binds a session to its charter better than a job title does.
-5. **Install the harness pieces.** Copy `skills/forge-onboard/` into `~/.claude/skills/`, the four files in `subagents/` into `~/.claude/agents/`, and `commands/model-routing.md` into `~/.claude/commands/`.
-6. **Onboard your first project.** Paste the project into `Projects/<Name>/<repo>/`, open a session at your root, and say "onboard `<Name>`". The skill scans the code read-only, drafts the project's bible from what the code shows, creates the tracker, and ends with an editable summary for you to correct. It will not restyle anything in your code; that is the layer's headline rule.
+You need Claude Code, git, and Node.js on your PATH (the enforcement hooks are small Node scripts).
+
+**Let your agent do it.** Open a Claude Code session in the folder you cloned or unzipped and say:
+
+> Read `docs/quickstart.md` and set up the Forge for me. My workspace root is `C:/Workspace`.
+
+It copies the template into your root, initializes git, installs the `~/.claude` pieces, and drafts your settings for you to apply. No command line.
+
+**Or run one command.** A setup helper does the same mechanical steps and prints what is left.
+
+Windows (PowerShell), and if it is blocked, prefix with `powershell -ExecutionPolicy Bypass -File`:
+
+```powershell
+.\template\tools\setup.ps1 -Root C:/Workspace
+```
+
+macOS or Linux:
+
+```bash
+bash template/tools/setup.sh --root ~/workspace
+```
+
+**Or do it by hand.** The step-by-step version, with the JSON path traps defused, is in [`docs/quickstart.md`](docs/quickstart.md).
+
+Whichever you pick, you finish by filling in the parts only you decide (your craft rules, your git-gate hard lines, your never-publish list), then onboard your first project with one line: open a session at your root and say "onboard `<Name>`". The skill scans the code read-only, drafts the project's bible from what the code shows, and ends with an editable summary. It will not restyle anything in your code; that is the layer's headline rule.
 
 ## How it works
 
