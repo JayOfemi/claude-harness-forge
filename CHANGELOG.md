@@ -2,7 +2,7 @@
 
 Fork-and-forget support surface: adopters diff against this file to see what changed upstream since their copy.
 
-## Unreleased
+## 1.3.0
 
 - Setup: `tools/setup.ps1` (Windows) and `tools/setup.sh` (macOS/Linux) added, a one-command helper that copies the template into your root, initializes git, installs the `~/.claude` pieces, and writes a settings file with your paths already filled in (forward slashes, so the JSON stays valid). Safe around an existing `~/.claude` and re-runnable: identical files are skipped, anything replaced is backed up first to a timestamped folder, and an existing `settings.json` is merged via the new `tools/merge-settings.mjs` (your settings kept, Forge entries added, every change printed; a true conflict resolves to the Forge value and is surfaced as a CONFLICT line).
 - Docs: the quickstart is reorganized around three setup paths (let the agent do it, run one command, or by hand). It gains an agent-facing setup procedure for the first path and a path-safety note for the last (use forward slashes in the JSON settings, quote paths with spaces), so hand-setup stops breaking on Windows.
