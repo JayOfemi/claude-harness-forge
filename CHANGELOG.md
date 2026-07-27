@@ -2,7 +2,7 @@
 
 Fork-and-forget support surface: adopters diff against this file to see what changed upstream since their copy.
 
-## Unreleased
+## 1.4.0
 
 - Setup: the workspace root now defaults to a `Forge` folder in your home folder; passing a path (`-Root` on Windows, `--root` on macOS or Linux) is optional and only needed to put it somewhere else. The quickstart, README, and by-hand commands follow the same default.
 - Hooks: `dir-added-gate.mjs` added on the DirectoryAdded event (ships in Claude Code 2.1.219). Session orientation happens at session start, so a folder added mid-session (`/add-dir`) bypasses it; the gate warns when the added path matches one of your excluded workspaces (list them in the hook) and restates the rule layers when it is outside your root. Detection-only, never blocks.
