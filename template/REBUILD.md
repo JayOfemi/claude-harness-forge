@@ -37,7 +37,7 @@ The runbook for restoring the whole operation on a fresh machine, or auditing wh
 
 ## 4. `~/.claude/settings.json` (verbatim wiring of record)
 
-`<RECORD-YOURS-HERE>` - start from `.claude-settings-template.json` at your root (the full wiring: the SessionStart INDEX loader; the pre-tool git gate; the post-edit style gate; the prompt-submit intake nudge and token handoff; the Stop write-back gate, reply gate, and token reporter; the config tripwire; the instructions audit). Once adapted and deployed, paste the LIVE version here verbatim and keep it current per the maintenance rule.
+`<RECORD-YOURS-HERE>` - start from `.claude-settings-template.json` at your root (the full wiring: the SessionStart INDEX loader; the pre-tool git gate; the post-edit style gate; the prompt-submit intake nudge and token handoff; the Stop write-back gate, reply gate, and token reporter; the config tripwire; the directory gate; the instructions audit). Once adapted and deployed, paste the LIVE version here verbatim and keep it current per the maintenance rule.
 
 ## 5. Hook scripts (verbatim copies of record)
 

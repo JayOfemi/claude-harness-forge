@@ -3,14 +3,14 @@
 ---
 name: server-logging
 layer: server
-when_to_read: Configuring logging on any .NET or Node server - single-line HH:mm:ss | LEVEL | category format
+when_to_read: Configuring logging on any .NET server - single-line HH:mm:ss | LEVEL | category format
 ---
 
 # Server Logging
 
-The server console matters as much as the client console. Default framework formatters in both .NET and Node.js fight the developer: multi-line layouts, two-line wraps with category-then-message, per-request firehose logs at Information by default. The result is a wall of framework chatter that buries the app's own log lines.
+The server console matters as much as the client console. Default framework formatters fight the developer: multi-line layouts, two-line wraps with category-then-message, per-request firehose logs at Information by default. The result is a wall of framework chatter that buries the app's own log lines.
 
-This doc codifies the "make server logs as readable as the client console" pattern. Same goal as `../startup-logging.md` (the banner) but for ongoing per-call logs.
+This doc codifies the "make server logs as readable as the client console" pattern. The worked implementation below is ASP.NET Core; the goals port to any stack.
 
 **Apply at scaffold time, not later.** Adding a custom formatter once an app has dozens of categories is fine; adding it after the first prod incident when you needed clean logs is too late.
 
@@ -159,7 +159,7 @@ Filter logic:
 00:48:55 | INFO | Lifetime: Now listening on: http://[::]:5109
 00:48:55 | INFO | Lifetime: Application started. Press Ctrl+C to shut down.
 00:48:55 | INFO | Migrations: Applying migration '20260515195240_AddSomething'
-00:49:12 | INFO | ContentSafetyClient: Content Safety: Hate=0 Sexual=0 -> approved
+00:49:12 | INFO | OrdersService: order 1042 accepted -> confirmation queued
 00:49:13 | WARN | JwtBearer: Bearer was forbidden for /admin/...
 ```
 
@@ -171,97 +171,8 @@ Bump `Microsoft.AspNetCore.Hosting.Diagnostics` back to `Information` in `appset
 
 ---
 
-## Azure Functions Node.js pattern
-
-The Functions runtime owns the console output format; you cannot replace its formatter the way you can in .NET. What you can do:
-
-### `host.json` log level filter
-
-```json
-{
-  "version": "2.0",
-  "logging": {
-    "logLevel": {
-      "default": "Information",
-      "Host": "Warning",
-      "Host.Aggregator": "Warning",
-      "Function": "Information"
-    }
-  }
-}
-```
-
-This drops the runtime's `Host.*` chatter (worker readiness, function indexing, lease renewals, etc.) to Warning, keeps your function-level `context.log(...)` calls visible at Information. Apply at scaffold time.
-
-### Optional `Logger.js` wrapper
-
-If a Functions project tails logs locally enough that the runtime's default format matters, drop a tiny wrapper module that prefixes every line with the client-style format.
-
-**The wrapper MUST route through `context.log/warn/error`, not raw `console.*`**, because Azure Functions v4 routes `context.log(...)` to Application Insights with invocation correlation and surfaces it in the deployed Function App's Log stream. Raw `console.log(...)` is invocation-uncorrelated and may or may not appear in those surfaces depending on host config.
-
-```javascript
-// src/lib/Logger.js
-function ts() {
-  const d = new Date();
-  const pad = n => String(n).padStart(2, '0');
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-
-function fmt(level, category, msg) {
-  return `${ts()} | ${level.padEnd(4)} | ${category}: ${msg}`;
-}
-
-// Factory takes the category + the function's context object so each
-// invocation gets a logger bound to it. Routes through context.log so
-// the line is visible everywhere (func start, Log stream, App Insights).
-module.exports = (category, context) => ({
-  info: (msg) => context.log(fmt('INFO', category, msg)),
-  warn: (msg) => context.warn(fmt('WARN', category, msg)),
-  error: (msg) => context.error(fmt('ERR', category, msg)),
-  debug: (msg) => process.env.LOG_DEBUG && context.log(fmt('DBG', category, msg)),
-});
-```
-
-Usage inside a function (instantiate inside the handler so each invocation gets its own context-bound logger):
-
-```javascript
-const makeLogger = require('../lib/Logger');
-
-app.http('analyzeFunc', {
-  methods: ['POST'],
-  authLevel: 'anonymous',
-  route: 'analyze',
-  handler: async (request, context) => {
-    const log = makeLogger('Analyze', context);
-    log.info(`POST from ${request.headers.get('x-forwarded-for')}`);
-    // ...
-  },
-});
-```
-
-The runtime prefix still shows up at the start of the line, but the developer's eye locks onto the `HH:mm:ss | LEVEL | Analyze:` segment and ignores the rest.
-
-### When to skip the wrapper
-
-Most Functions sites ship as fire-and-forget endpoints (subscribe, contact, cron jobs) where the operator never tails logs locally; the workflow is push-to-deploy and read App Insights. For those sites the `host.json` filter alone is enough; the wrapper is extra weight for no win. Reach for the wrapper only when a project's local debugging cycle has you eyeballing `func start` output regularly.
-
----
-
-## When to scaffold
-
-In `../project-bootstrap.md`, the scaffold pass should add:
-
-- [ ] **.NET API:** `CompactConsoleFormatter.cs` in the API project. `Program.cs` registers the formatter. `appsettings.Development.json` carries the log-level block with your app's root namespace at `Debug` and `Microsoft.*` at `Warning` except the specific carve-outs.
-- [ ] **Functions Node.js:** `host.json` carries the `logging.logLevel` block silencing `Host` to Warning.
-
-Apply both at scaffold. The amount of time it takes to wire is minutes; the amount of time it saves once logs start mattering is much more.
-
----
-
 ## Maintenance
 
 When a framework category becomes consistently noisy across multiple projects (a Microsoft package's verbose default, a new EF telemetry firehose), add it to the default filter list in this doc so future scaffolds inherit the suppression.
-
-When the canonical implementation moves, update the reference block at the top of your copy.
 
 When new ANSI-aware terminals become standard enough that the `Console.IsOutputRedirected` guard is overkill, the .NET formatter can drop the conditional and always emit colors. Until then, keep the guard so piped output stays clean.

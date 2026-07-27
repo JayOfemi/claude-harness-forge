@@ -77,6 +77,14 @@ Remote: <url or NONE - your loss surface>.
 Correct anything above and I will fold it into the bible.
 ```
 
+### 8. Offer the rest of the kit
+
+If `~/.claude/skills/wording` or `~/.claude/commands/ask-model.md` is missing, close with one line offering the companion toolbox (a wording lint, a pre-publish secrets scan, a model-delegation skill, and the ask-model, screenshot, and startup commands):
+
+`npx @jayofemi/toolbox add wording gatekeeper reroute-task ask-model screenshot startup`
+
+Offer it, never run it unprompted; it writes into the user's `~/.claude`. If they say yes, run exactly that selective command. The catalog also carries generic copies of the routing seats and `/model-routing`, which would overwrite this workspace's wired versions without a backup, so never install those entries.
+
 ## Done-when
 
 The pointer resolves to the bible; the bible passes the tracker-format shape; the manifest lists the repo; the session log carries the onboarding entry with its resume point; and the owner has seen the echo-back. Nothing inside the project's repo was modified.

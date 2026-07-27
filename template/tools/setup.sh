@@ -11,7 +11,8 @@
 # added, every change printed; where a value truly conflicts the Forge value
 # wins and says so).
 #
-#   bash template/tools/setup.sh --root ~/workspace [--force]
+#   bash template/tools/setup.sh [--root <path>] [--force]
+# The root defaults to a Forge folder in your home folder (~/Forge).
 set -euo pipefail
 # bash 5.2+ expands & in unquoted ${var//pat/rep} replacements; a root path
 # containing & would corrupt every generated settings value without this.
@@ -26,14 +27,14 @@ ROOT=""
 FORCE=0
 while [ $# -gt 0 ]; do
 	case "$1" in
-		--root)   [ $# -ge 2 ] || die "--root needs a value (for example --root ~/workspace)"; ROOT="$2"; shift 2 ;;
+		--root)   [ $# -ge 2 ] || die "--root needs a value (for example --root ~/my-forge)"; ROOT="$2"; shift 2 ;;
 		--root=*) ROOT="${1#*=}"; shift ;;
 		--force)  FORCE=1; shift ;;
-		-h|--help) say "usage: setup.sh --root <path> [--force]"; exit 0 ;;
+		-h|--help) say "usage: setup.sh [--root <path>] [--force]  (root defaults to ~/Forge)"; exit 0 ;;
 		*) die "unknown argument: $1" ;;
 	esac
 done
-[ -n "$ROOT" ] || die "--root <path> is required (for example --root ~/workspace)"
+[ -n "$ROOT" ] || ROOT="$HOME/Forge"
 # The --root=~/x form is not tilde-expanded by the shell, so expand a leading ~ here.
 case "$ROOT" in "~") ROOT="$HOME" ;; "~/"*) ROOT="$HOME/${ROOT#\~/}" ;; esac
 
@@ -43,7 +44,7 @@ TEMPLATE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 [ -f "$TEMPLATE_DIR/CLAUDE.md" ] || die "cannot find the template next to this script (expected $TEMPLATE_DIR/CLAUDE.md). Run this from where you extracted the download."
 
 say "Forge setup"
-say "  template: $TEMPLATE_DIR"
+say "  template source: $TEMPLATE_DIR"
 
 # 2. Guard the root. An existing Forge root is fine (we re-install and refresh
 #    settings); a non-empty non-Forge folder needs --force so nothing is buried.
@@ -60,7 +61,13 @@ mkdir -p "$ROOT"
 ROOT_ABS="$(cd "$ROOT" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 USER_NAME="$(id -un 2>/dev/null || echo "${USER:-user}")"
-say "  root:     $ROOT_ABS"
+say "  workspace root:  $ROOT_ABS"
+say ""
+say "About to (anything already in place is kept as is):"
+say "  1. copy the template into $ROOT_ABS, which becomes your workspace root"
+say "  2. start a git repo there and make the first commit"
+say "  3. install the harness pieces into $CLAUDE_DIR (the onboarding skill, the routing seats, the /model-routing command)"
+say "  4. fill in your settings (an existing settings.json is merged, never overwritten; anything replaced is backed up first)"
 say ""
 
 # 3. Copy the template contents into the root (constitution lands at the root).
@@ -219,22 +226,28 @@ else
 	fi
 fi
 
-# 7. Print what only you can finish.
+# 7. Print where everything went and what only you can finish.
 say ""
-say "Done with the mechanical parts. What is left for you:"
+say "Done with the mechanical parts. Where everything went:"
+say "  your workspace root: $ROOT_ABS (the whole layer lives here; open agent sessions here)"
+say "  for Claude Code:     $CLAUDE_DIR (the skill, the seats, the command, your settings)"
+say ""
+say "What is left for you (paths are inside your workspace root):"
 say "  1. Settings: review ~/.claude/settings.json (written or merged above; any"
 say "     CONFLICT lines show where a Forge value replaced yours). The Forge-only"
 say "     reference copy is settings.generated.json in your root."
-say "  2. Hard lines: open hooks/git-gate.mjs at your root and replace <YOUR-HARD-LINES>"
+say "  2. Hard lines: open hooks/git-gate.mjs and replace <YOUR-HARD-LINES>"
 say "     with the git operations an agent must never do alone."
 say "  3. Craft rules: fill the <YOUR-*> sections in Claude/CLAUDE.md. A worked"
 say "     example lives in the examples/ folder from the download (beside template/)."
 say "  4. Roles: name the personas in Agents/AGENT_ROLES.md (optional now)."
 say "  5. Never-publish list: seed deny-list.txt with your names, employer, and paths."
+say "  6. Optional, the rest of the kit: npx @jayofemi/toolbox add wording gatekeeper reroute-task ask-model screenshot startup"
+say "     (companion skills and commands; the seats and /model-routing installed above stay the template's)"
 if [ -d "$BACKUP_DIR" ]; then
 	say ""
 	say "Everything replaced was backed up first: $BACKUP_DIR"
 fi
 say ""
-say "Then open a NEW session at your root and say: onboard <YourProject>"
+say "Then open a NEW session in $ROOT_ABS and say: onboard <YourProject>"
 say "Hooks load at session start, so the wiring takes effect from your next session, not this shell."

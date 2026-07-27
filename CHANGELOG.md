@@ -2,6 +2,16 @@
 
 Fork-and-forget support surface: adopters diff against this file to see what changed upstream since their copy.
 
+## Unreleased
+
+- Setup: the workspace root now defaults to a `Forge` folder in your home folder; passing a path (`-Root` on Windows, `--root` on macOS or Linux) is optional and only needed to put it somewhere else. The quickstart, README, and by-hand commands follow the same default.
+- Hooks: `dir-added-gate.mjs` added on the DirectoryAdded event (ships in Claude Code 2.1.219). Session orientation happens at session start, so a folder added mid-session (`/add-dir`) bypasses it; the gate warns when the added path matches one of your excluded workspaces (list them in the hook) and restates the rule layers when it is outside your root. Detection-only, never blocks.
+- Settings: the template's deny examples now cover the common credential surfaces beyond browser data (SSH keys, cloud CLI configs, npm and netrc tokens, GPG, Docker and GitHub CLI credentials, the harness's own credentials file); the env block adds two more runaway caps (concurrent subagents 10, spawn depth 1); the allow examples include the `CLAUDE_REVIEWED=1` forms so a git command re-issued through the git gate does not re-prompt.
+- Kit: the quickstart, the onboarding skill, and both setup helpers now offer the author's free companion toolbox on npm as the rest of the kit, via a selective one-command install (the wording lint, the pre-publish secrets scan, the model-delegation skill, and the ask-model, screenshot, and startup commands) that leaves the template's routing seats and `/model-routing` in place.
+- Examples: the worked operator layer is trimmed to what transfers. Rules that pointed at standards the template does not ship (a vendor-specific web deploy workflow, a personal mobile dev target, a vendor email rule, an architecture default) are gone; the terminal, browser-tool, and broken-deploy rules are compressed to their transferable lesson; the server-logging example keeps the .NET worked pattern and drops the vendor-specific serverless half.
+- Setup: both helpers now announce their plan before touching anything (what will happen and where) and close with a "where everything went" block that names your workspace root and the `~/.claude` folder by full path; the final next-step line names your workspace path instead of saying "your root".
+- Docs: the quickstart states where setup writes before any command appears (the workspace root you choose plus Claude Code's `~/.claude` folder), and each path's commands are introduced with what they are about to do, written for a reader who did not build the template.
+
 ## 1.3.0
 
 - Setup: `tools/setup.ps1` (Windows) and `tools/setup.sh` (macOS/Linux) added, a one-command helper that copies the template into your root, initializes git, installs the `~/.claude` pieces, and writes a settings file with your paths already filled in (forward slashes, so the JSON stays valid). Safe around an existing `~/.claude` and re-runnable: identical files are skipped, anything replaced is backed up first to a timestamped folder, and an existing `settings.json` is merged via the new `tools/merge-settings.mjs` (your settings kept, Forge entries added, every change printed; a true conflict resolves to the Forge value and is surfaced as a CONFLICT line).

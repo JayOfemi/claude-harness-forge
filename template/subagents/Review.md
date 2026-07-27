@@ -1,6 +1,6 @@
 ---
 name: Review
-description: Strong-tier review agent for judging completed work: diffs, plans, drafts, findings, or claims that need adversarial verification before they land. Use for the final-review bookend. Reviews and reports; never edits or fixes.
+description: "Strong-tier review agent for judging completed work: diffs, plans, drafts, findings, or claims that need adversarial verification before they land. Use for the final-review bookend. Reviews and reports; never edits or fixes."
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---

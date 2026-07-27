@@ -6,7 +6,9 @@
     "Replace <YOUR-USER> in the deny rules with your OS user name. The deny examples are Windows-shaped (credential stores, DPAPI keys, browser profile data); on macOS or Linux, swap in your platform's equivalents (for example //Users/<YOUR-USER>/Library/Keychains/**). Deny rules use gitignore-style patterns; a leading // anchors at the filesystem root.",
     "The Stop hook passes the write-back gate its two paths via env vars on the command line - filling THIS file configures that gate completely; the script-level placeholders are a backstop only.",
     "The git gate lives at hooks/git-gate.mjs and fails closed; open it and replace <YOUR-HARD-LINES> with the push and commit constraints that apply in your workspace.",
-    "The env block caps runaway loops. The harness defaults are 200 subagent spawns and 200 web searches per session; the template ships 25 and 50. Raise them per-session for a sanctioned big run ($env:CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION = '100' before launching) instead of raising the standing cap.",
+    "The env block caps runaway loops. The harness defaults are 200 subagent spawns and 200 web searches per session; the template ships 25 spawns, 50 searches, 10 concurrent subagents, and a spawn depth of 1. Raise them per-session for a sanctioned big run ($env:CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION = '100' before launching) instead of raising the standing cap.",
+    "The CLAUDE_REVIEWED allow rules let a git command the git gate blocked, once verified and re-issued with that prefix, run without a second permission prompt.",
+    "The directory gate warns when a folder added mid-session (/add-dir) is one of your excluded workspaces, and re-states the rule layers when it is outside your root; list your excluded paths in hooks/dir-added-gate.mjs.",
     "The reply gate enforces a prose-length ceiling on each turn's final reply (default 300 words; REPLY_GATE_MAX_WORDS overrides). It blocks once with exact findings, then always passes the revision.",
     "The token reporter prints each turn's full token spend (subagents included) as a systemMessage line and appends a daily JSONL ledger under ~/.claude/token-ledger/. The token handoff surfaces the previous turn's cost inside the next reply, for hosts that do not render systemMessage output; if your host renders it, the handoff is optional.",
     "Premium-tier subagent spawns run without an approval prompt by default; add an ask rule (for example Agent(model:opus)) per premium tier if you want one - the env caps below bound the runaway class either way.",
@@ -17,20 +19,36 @@
   "permissions": {
     "allow": [
       "Bash(git -C <YOUR-TRACKER-HUB-PATH> push:*)",
-      "Bash(git -C <ROOT> push:*)"
+      "Bash(git -C <ROOT> push:*)",
+      "Bash(CLAUDE_REVIEWED=1 git commit:*)",
+      "Bash(CLAUDE_REVIEWED=1 git -C <YOUR-TRACKER-HUB-PATH> push:*)",
+      "Bash(CLAUDE_REVIEWED=1 git -C <ROOT> push:*)"
     ],
     "deny": [
       "Read(//c/Users/<YOUR-USER>/AppData/Roaming/Microsoft/Credentials/**)",
       "Read(//c/Users/<YOUR-USER>/AppData/Local/Microsoft/Credentials/**)",
       "Read(//c/Users/<YOUR-USER>/AppData/Roaming/Microsoft/Protect/**)",
       "Read(//c/Users/<YOUR-USER>/AppData/Local/Google/Chrome/User Data/**)",
-      "Read(//c/Users/<YOUR-USER>/AppData/Local/Microsoft/Edge/User Data/**)"
+      "Read(//c/Users/<YOUR-USER>/AppData/Local/Microsoft/Edge/User Data/**)",
+      "Read(//c/Users/<YOUR-USER>/AppData/Roaming/Mozilla/Firefox/**)",
+      "Read(//c/Users/<YOUR-USER>/AppData/Roaming/GitHub CLI/**)",
+      "Read(//c/Users/<YOUR-USER>/.claude/.credentials.json)",
+      "Read(//c/Users/<YOUR-USER>/.ssh/**)",
+      "Read(//c/Users/<YOUR-USER>/.aws/**)",
+      "Read(//c/Users/<YOUR-USER>/.azure/**)",
+      "Read(//c/Users/<YOUR-USER>/.gnupg/**)",
+      "Read(//c/Users/<YOUR-USER>/.docker/config.json)",
+      "Read(//c/Users/<YOUR-USER>/.config/gh/**)",
+      "Read(//c/Users/<YOUR-USER>/.npmrc)",
+      "Read(//c/Users/<YOUR-USER>/.netrc)"
     ],
     "additionalDirectories": ["<ROOT>"]
   },
   "env": {
     "CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION": "25",
-    "CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION": "50"
+    "CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION": "50",
+    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "10",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"
   },
   "hooks": {
     "SessionStart": [
@@ -103,6 +121,16 @@
           {
             "type": "command",
             "command": "node <ROOT>/hooks/config-tripwire.mjs"
+          }
+        ]
+      }
+    ],
+    "DirectoryAdded": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node <ROOT>/hooks/dir-added-gate.mjs"
           }
         ]
       }

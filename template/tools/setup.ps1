@@ -15,18 +15,21 @@
   where a value truly conflicts the Forge value wins and says so).
 
 .PARAMETER Root
-  The workspace root to create or set up (for example C:/Workspace). Forward
-  or back slashes both work.
+  The workspace root to create or set up. Defaults to a Forge folder in your
+  home folder (for example C:\Users\<you>\Forge). Forward or back slashes both
+  work.
 
 .PARAMETER Force
   Allow setup into a folder that already has files but is not a Forge root.
 
 .EXAMPLE
-  .\template\tools\setup.ps1 -Root C:/Workspace
+  .\template\tools\setup.ps1
+
+.EXAMPLE
+  .\template\tools\setup.ps1 -Root D:/Work/Forge
 #>
 param(
-	[Parameter(Mandatory = $true)]
-	[string]$Root,
+	[string]$Root = "",
 	[switch]$Force
 )
 
@@ -42,6 +45,9 @@ $TemplateDir = Split-Path -Parent $PSScriptRoot
 if (-not (Test-Path -LiteralPath (Join-Path $TemplateDir "CLAUDE.md"))) {
 	Die "cannot find the template next to this script (expected $TemplateDir/CLAUDE.md). Run this script from where you extracted the download."
 }
+if (-not $Root) {
+	$Root = Join-Path $HOME "Forge"
+}
 if (-not [System.IO.Path]::IsPathRooted($Root)) {
 	$Root = Join-Path (Get-Location).Path $Root
 }
@@ -51,10 +57,17 @@ $HubFwd = "$RootFwd/Claude"
 # The deny paths key on the profile-folder name (C:\Users\<leaf>), which is not
 # always the login name; prefer the profile leaf, with fallbacks.
 $User = if ($env:USERPROFILE) { Split-Path -Leaf $env:USERPROFILE } elseif ($env:USERNAME) { $env:USERNAME } else { "user" }
+$ClaudeDir = Join-Path $HOME ".claude"
 
 Say "Forge setup"
-Say "  template: $TemplateDir"
-Say "  root:     $RootAbs"
+Say "  template source: $TemplateDir"
+Say "  workspace root:  $RootAbs"
+Say ""
+Say "About to (anything already in place is kept as is):"
+Say "  1. copy the template into $RootAbs, which becomes your workspace root"
+Say "  2. start a git repo there and make the first commit"
+Say "  3. install the harness pieces into $ClaudeDir (the onboarding skill, the routing seats, the /model-routing command)"
+Say "  4. fill in your settings (an existing settings.json is merged, never overwritten; anything replaced is backed up first)"
 Say ""
 
 # 2. Guard the root. An existing Forge root is fine (we re-install and refresh
@@ -123,7 +136,6 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
 # 5. Install the harness pieces into ~/.claude (the front door, the routing
 #    seats, and the switch). Source mirrors stay at your root. Never blind:
 #    identical files are skipped, and anything replaced is backed up first.
-$ClaudeDir = Join-Path $HOME ".claude"
 $script:BackupDir = Join-Path $ClaudeDir ("forge-setup-backup-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 $script:BackedUp = $false
 function BackupTarget([string]$path, [string]$rel) {
@@ -274,22 +286,28 @@ if (-not (Test-Path -LiteralPath $tpl)) {
 	}
 }
 
-# 7. Print what only you can finish.
+# 7. Print where everything went and what only you can finish.
 Say ""
-Say "Done with the mechanical parts. What is left for you:"
+Say "Done with the mechanical parts. Where everything went:"
+Say "  your workspace root: $RootAbs (the whole layer lives here; open agent sessions here)"
+Say "  for Claude Code:     $ClaudeDir (the skill, the seats, the command, your settings)"
+Say ""
+Say "What is left for you (paths are inside your workspace root):"
 Say "  1. Settings: review ~/.claude/settings.json (written or merged above; any"
 Say "     CONFLICT lines show where a Forge value replaced yours). The Forge-only"
 Say "     reference copy is settings.generated.json in your root."
-Say "  2. Hard lines: open hooks/git-gate.mjs at your root and replace <YOUR-HARD-LINES>"
+Say "  2. Hard lines: open hooks/git-gate.mjs and replace <YOUR-HARD-LINES>"
 Say "     with the git operations an agent must never do alone."
 Say "  3. Craft rules: fill the <YOUR-*> sections in Claude/CLAUDE.md. A worked"
 Say "     example lives in the examples/ folder from the download (beside template/)."
 Say "  4. Roles: name the personas in Agents/AGENT_ROLES.md (optional now)."
 Say "  5. Never-publish list: seed deny-list.txt with your names, employer, and paths."
+Say "  6. Optional, the rest of the kit: npx @jayofemi/toolbox add wording gatekeeper reroute-task ask-model screenshot startup"
+Say "     (companion skills and commands; the seats and /model-routing installed above stay the template's)"
 if ($script:BackedUp) {
 	Say ""
 	Say "Everything replaced was backed up first: $script:BackupDir"
 }
 Say ""
-Say "Then open a NEW session at your root and say: onboard <YourProject>"
+Say "Then open a NEW session in $RootAbs and say: onboard <YourProject>"
 Say "Hooks load at session start, so the wiring takes effect from your next session, not this shell."

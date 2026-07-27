@@ -10,6 +10,6 @@ when_to_read: Setting up or modifying continuous integration on any repo
 
 **Standard**: GitHub Actions `.github/workflows/ci.yml` runs on every PR + push to `main`. Builds + tests; never deploys.
 
-**NOT**: CI that deploys (deploys are release-gated per `deploy-triggers.md`); third-party CI vendors.
+**NOT**: CI that deploys (deploys stay on their own human-gated trigger); third-party CI vendors.
 
 **Why**: proof the tree builds on every change, with deployment kept on its own human-gated trigger.

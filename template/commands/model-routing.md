@@ -1,5 +1,5 @@
 ---
-description: Operate the model-routing seats: report where they stand, pin or free a seat, or turn routing off
+description: "Operate the model-routing seats: report where they stand, pin or free a seat, or turn routing off"
 argument-hint: [status|dynamic|inherit|set <stage> <model|dynamic>]
 ---
 

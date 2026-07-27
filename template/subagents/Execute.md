@@ -1,6 +1,6 @@
 ---
 name: Execute
-description: Implementation agent for executing work against a clear spec: edits you can describe precisely, mechanical changes, scripted refactors, file and doc production. Use for the execution middle of multi-stage work, after planning has settled what to build. Needs the goal, the files, the constraints, and the done-when passed in.
+description: "Implementation agent for executing work against a clear spec: edits you can describe precisely, mechanical changes, scripted refactors, file and doc production. Use for the execution middle of multi-stage work, after planning has settled what to build. Needs the goal, the files, the constraints, and the done-when passed in."
 tools: Read, Grep, Glob, Bash, Edit, Write
 model: inherit
 ---

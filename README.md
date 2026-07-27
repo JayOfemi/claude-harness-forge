@@ -21,39 +21,41 @@ The Forge is files. There is no server, no background process, and no account. C
 | The standards bank | `STANDARDS/` | One file per "how we do X", each behind one routing line in `INDEX.md`. Sessions read the index every time and open only the one or two standards the task touches |
 | Project trackers | `Claude/<Project>/` | Per-project memory: a bible of facts and decisions, plus a session log where every sitting ends with a resume point |
 | The roles | `Agents/AGENT_ROLES.md` | Charters for a council (a chair, a skeptic, a treasurer) and staff you summon by name to stress-test plans or keep the workspace clean |
-| The hooks | `hooks/` + your settings file | The enforcement layer: a session-start index injector, a style gate that lints only newly introduced text, an intake nudge, a write-back gate, a git gate carrying your hard lines, a config tripwire, a load audit, a reply gate that bounces bloated answers with the word count, and a token reporter plus handoff pair that surface what every turn cost |
+| The hooks | `hooks/` + your settings file | The enforcement layer: a session-start index injector, a style gate that lints only newly introduced text, an intake nudge, a write-back gate, a git gate carrying your hard lines, a config tripwire, a directory gate that flags folders added mid-session, a load audit, a reply gate that bounces bloated answers with the word count, and a token reporter plus handoff pair that surface what every turn cost |
 | The routing seats | `subagents/` + `commands/` | Four subagents, dynamic by default: nothing runs above your session's own tier, planning and review ride it exactly, exploration stays on the cheap floor, execution runs capped at it. The `/model-routing` command reports the seats, pins any of them to a fixed model, or frees them back to dynamic |
 | The tools | `tools/` + `skills/` | A one-command setup helper, the onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, and a workspace composer for multi-repo setups |
 
 ## Get set up
 
-From zero to a governed workspace with your first project onboarded in about five minutes. Three ways to do it, from least effort to most control. The full walkthrough, including what each path leaves for you to decide, is in [`docs/quickstart.md`](docs/quickstart.md).
+From zero to a governed workspace with your first project onboarded in about five minutes. Whichever way you pick, setup writes to the same two places. It creates a workspace folder, a `Forge` folder in your home folder by default (or any path you choose), and it installs the agent-facing pieces and your settings into Claude Code's `~/.claude` folder. Three ways to do it, from least effort to most control. The full walkthrough, including what each path leaves for you to decide, is in [`docs/quickstart.md`](docs/quickstart.md).
 
 You need Claude Code, git, and Node.js on your PATH (the enforcement hooks are small Node scripts).
 
-**Let your agent do it.** Open a Claude Code session in the folder you cloned or unzipped and say:
+**Let your agent do it.** Open a Claude Code session in the folder you cloned or unzipped and say (name a different root in the same message if you do not want the default):
 
-> Read `docs/quickstart.md` and set up the Forge for me. My workspace root is `C:/Workspace`.
+> Read `docs/quickstart.md` and set up the Forge for me.
 
 It copies the template into your root, initializes git, installs the `~/.claude` pieces, and drafts your settings for you to apply. No command line.
 
-**Or run one command.** A setup helper does the same mechanical steps and prints what is left. It is safe around an existing `~/.claude`: anything it replaces is backed up first, and an existing `settings.json` is merged rather than overwritten, with every change printed.
+**Or run one command.** A setup helper creates the workspace at the default (or at a path you pass with `-Root` / `--root`), does the same mechanical steps, announces its plan before it runs, and closes by printing where everything went and what is left. It is safe around an existing `~/.claude`: anything it replaces is backed up first, and an existing `settings.json` is merged rather than overwritten, with every change printed.
 
 Windows (PowerShell), and if it is blocked, prefix with `powershell -ExecutionPolicy Bypass -File`:
 
 ```powershell
-.\template\tools\setup.ps1 -Root C:/Workspace
+.\template\tools\setup.ps1
 ```
 
 macOS or Linux:
 
 ```bash
-bash template/tools/setup.sh --root ~/workspace
+bash template/tools/setup.sh
 ```
 
 **Or do it by hand.** The step-by-step version, with the JSON path traps defused, is in [`docs/quickstart.md`](docs/quickstart.md).
 
 Whichever you pick, you finish by filling in the parts only you decide (your craft rules, your git-gate hard lines, your never-publish list), then onboard your first project with one line: open a session at your root and say "onboard `<Name>`". The skill scans the code read-only, drafts the project's bible from what the code shows, and ends with an editable summary. It will not restyle anything in your code; that is the layer's headline rule.
+
+**Then round out the kit.** The governance pieces install with the template. The author's day-to-day skills and commands ship separately as the free [Toolbox](https://www.npmjs.com/package/@jayofemi/toolbox) on npm; add the pieces the template does not already install with `npx @jayofemi/toolbox add wording gatekeeper reroute-task ask-model screenshot startup`. Leave the catalog's routing seats and `/model-routing` to the template, since the toolbox overwrites without a backup.
 
 ## How it works
 
@@ -68,7 +70,7 @@ The Forge is built for Claude Code. The enforcement is a Claude Code hook pack w
 
 Because the load-bearing rules live in hooks rather than in a persona, the enforcement travels with the files instead of with a prompt. That portability is a property of the design. Although Claude Code is what the Forge supports, it can likely be easily adapted to work with other models.
 
-## Honest limits
+## Disclaimer
 
 The Forge keeps an agent inside your rules. It does not make the agent right. Treat it like a car that drives itself: it steers, you stay awake, and you check the work before it ships. It comes as is, MIT licensed, with no support line behind it.
 

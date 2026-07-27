@@ -1,6 +1,6 @@
 ---
 name: Plan
-description: Strong-tier software architect agent for designing implementation plans and making design calls. Use for the planning bookend of multi-stage work: it returns step-by-step plans, names critical files, weighs architectural trade-offs, and captures a machine-checkable done-when. Plans and reports; never edits.
+description: "Strong-tier software architect agent for designing implementation plans and making design calls. Use for the planning bookend of multi-stage work: it returns step-by-step plans, names critical files, weighs architectural trade-offs, and captures a machine-checkable done-when. Plans and reports; never edits."
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---
