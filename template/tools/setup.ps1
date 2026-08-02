@@ -310,4 +310,5 @@ if ($script:BackedUp) {
 }
 Say ""
 Say "Then open a NEW session in $RootAbs and say: onboard <YourProject>"
+Say "The best ways to use it from there: docs/using-the-forge.md in this download (beside template/)."
 Say "Hooks load at session start, so the wiring takes effect from your next session, not this shell."

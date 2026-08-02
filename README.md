@@ -35,7 +35,7 @@ You need Claude Code, git, and Node.js on your PATH (the enforcement hooks are s
 
 > Read `docs/quickstart.md` and set up the Forge for me.
 
-It copies the template into your root, initializes git, installs the `~/.claude` pieces, and drafts your settings for you to apply. No command line.
+It copies the template into your root, initializes git, installs the `~/.claude` pieces, drafts your settings for you to apply, and closes by listing the best ways to use your new workspace. No command line.
 
 **Or run one command.** A setup helper creates the workspace at the default (or at a path you pass with `-Root` / `--root`), does the same mechanical steps, announces its plan before it runs, and closes by printing where everything went and what is left. It is safe around an existing `~/.claude`: anything it replaces is backed up first, and an existing `settings.json` is merged rather than overwritten, with every change printed.
 
@@ -61,6 +61,7 @@ Whichever you pick, you finish by filling in the parts only you decide (your cra
 
 The parts above and the path one request travels through them, end to end, are laid out in [`docs/how-it-works.md`](docs/how-it-works.md). The front page at [forge.jayofemi.com](https://forge.jayofemi.com) animates the same path as an x-ray of the machine.
 
+- [`docs/using-the-forge.md`](docs/using-the-forge.md) is the day-to-day driving guide, the best ways to use the layer once it is set up.
 - [`docs/the-tier-model.md`](docs/the-tier-model.md) explains why almost nothing loads by default, and where any new rule belongs.
 - [`docs/customize-first.md`](docs/customize-first.md) is the replacement order for making the layer yours.
 

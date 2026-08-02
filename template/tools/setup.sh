@@ -250,4 +250,5 @@ if [ -d "$BACKUP_DIR" ]; then
 fi
 say ""
 say "Then open a NEW session in $ROOT_ABS and say: onboard <YourProject>"
+say "The best ways to use it from there: docs/using-the-forge.md in this download (beside template/)."
 say "Hooks load at session start, so the wiring takes effect from your next session, not this shell."

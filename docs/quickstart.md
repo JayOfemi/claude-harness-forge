@@ -80,7 +80,7 @@ This section is written for the agent running that request. If you are a person,
 4. **Install the harness pieces.** Copy `skills/forge-onboard/` into `~/.claude/skills/`, the `subagents/*.md` files into `~/.claude/agents/`, and `commands/*.md` into `~/.claude/commands/`.
 5. **Draft the settings, then defer.** Read `.claude-settings-template.json` at the root. Produce the filled version by replacing `<ROOT>` with the root path in forward slashes (so the JSON stays valid), `<YOUR-TRACKER-HUB-PATH>` with `<root>/Claude`, and `<YOUR-USER>` with the OS user. Present the filled content to the user and ask them to save it as `~/.claude/settings.json` (or merge it into the one they have). Do not silently overwrite their global settings. Note that hooks take effect from their next session.
 6. **Offer the rule surfaces.** Offer to fill `Claude/CLAUDE.md` from `examples/craft-globals-example.md` if they want a starting set, and to write their named roles into `Agents/AGENT_ROLES.md` and seed `deny-list.txt` from anything they give you. Leave `<YOUR-HARD-LINES>` in `hooks/git-gate.mjs` for them to state, since only they know their hard lines.
-7. **Echo back.** Close with a short, editable summary of what was copied and installed, what you drafted and deferred (the settings), and the exact next action (apply the settings, then open a new session and onboard a project).
+7. **Echo back, then hand over the keys.** Close with a short, editable summary of what was copied and installed, what you drafted and deferred (the settings), and the exact next action (apply the settings, then open a new session and onboard a project). End that same final message with the recommended ways of working from [`using-the-forge.md`](using-the-forge.md), one line per item (the action and what it buys), so the user finishes setup knowing how to drive the layer.
 
 ## By hand, step by step
 
@@ -132,6 +132,8 @@ Paste or clone the project into `Projects/<Name>/<repo>/` inside your root. Open
 
 **Expected first-run output, so nothing alarms you:** the onboarding's manifest step prints a "NO remote" line for any repo without a configured remote. For your project repos that warning is real (unpushed work is your loss surface); for the root repo it just means you have not pushed the workspace itself yet.
 
+With the first project in, the day-to-day habits that pay off from here (the two-word resume, letting the record write itself, the publish-time sweep) are in [`using-the-forge.md`](using-the-forge.md).
+
 ## Round out the kit
 
 The template installs the governance pieces (the onboarding skill, the four routing seats, the `/model-routing` switch). The rest of the kit this layer was built alongside ships separately as a free companion toolbox on npm. It adds a wording lint for anything about to ship, a pre-publish secrets scan, a skill that delegates a task to a cheaper model, and commands for asking another model a question, capturing exchanges verbatim, and session startup. Add exactly those pieces with one command:
@@ -155,6 +157,7 @@ Run `npx @jayofemi/toolbox list` to see the catalog, or run it bare for an inter
 
 ## Where to go next
 
+- [`using-the-forge.md`](using-the-forge.md) - the best ways to use the layer after setup, what you say day to day, and what each gate means when it fires.
 - [`how-it-works.md`](how-it-works.md) - the parts of the machine and the path one ask travels through them, end to end.
 - [`the-tier-model.md`](the-tier-model.md) - why this layer loads almost nothing by default, and where any new rule belongs.
 - [`customize-first.md`](customize-first.md) - the replacement order for making the layer yours.

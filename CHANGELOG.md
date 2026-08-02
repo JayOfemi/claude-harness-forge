@@ -2,6 +2,10 @@
 
 Fork-and-forget support surface: adopters diff against this file to see what changed upstream since their copy.
 
+## Unreleased
+
+- Docs: `using-the-forge.md` added, the best ways to use the layer after setup (where to open sessions, the one-line onboard, the two-word resume, what a gate block means, roles, captures, the publish-time sweep, promoting standards), sorted by when each habit starts paying off. The quickstart's agent path now ends setup by presenting that list, both helpers' closing print points at the doc, and the quickstart links it first among the next reads.
+
 ## 1.4.0
 
 - Setup: the workspace root now defaults to a `Forge` folder in your home folder; passing a path (`-Root` on Windows, `--root` on macOS or Linux) is optional and only needed to put it somewhere else. The quickstart, README, and by-hand commands follow the same default.
