@@ -6,7 +6,7 @@ From zero to a governed workspace with your first project onboarded. Most of the
 
 A file-based governance layer for agent sessions. One root folder holds a constitution (behavior rules every agent inherits), a standards bank behind a grep-fast index (read just-in-time, not preloaded), per-project trackers (a bible of facts, a session log with resume points), named agent roles, and a small pack of enforcement hooks that gate and detect instead of reminding. The layer's job: whatever the prompt quality, sessions land on the right work, follow your rules, and leave a written trail.
 
-Everything below assumes you have downloaded and unzipped the template (or cloned the repo), so you are sitting in a folder that contains `template/`, `docs/`, and `examples/`.
+Everything below assumes you have downloaded and unzipped the template (or cloned the repo), so you are sitting in a folder that contains `template/`, `docs/`, and `examples/` side by side. Unzipping often adds a wrapper folder; if you see a single folder alone, go into it first.
 
 **Before you start**, you need Claude Code, git, and Node.js on your PATH. The enforcement hooks are small Node scripts, so without Node they will not run.
 
@@ -17,52 +17,21 @@ Whichever path you pick, setup writes to exactly two places on your machine:
 - **Your workspace root**: one new folder that the whole template is copied into. The constitution, the standards bank, the trackers, the hooks, and later your projects all live inside it. This guide calls it your root. By default it is a `Forge` folder in your home folder (`C:/Users/<you>/Forge` on Windows, `~/Forge` on macOS or Linux); every path below also lets you choose somewhere else.
 - **Claude Code's `~/.claude` folder** in your user profile: the two skills (the project onboarder and the rules interview), the four model-routing seats, the `/model-routing` command, and your settings land there, because that is where Claude Code looks for them.
 
-Three ways to set up, all reaching the same place. Skim them and pick one.
+Three ways to set up, all reaching the same place. Not sure which? Let the agent do it.
 
-- **Run one command.** A helper does the mechanical steps and tells you what is left. Jump to [One command](#one-command).
-- **Let the agent do it.** The no-terminal path. You open one session and it does the work. Jump to [Let the agent set it up](#let-the-agent-set-it-up).
+- **Let the agent do it.** The recommended path: open one session, paste one sentence, and answer its questions in chat. Jump to [Let the agent set it up](#let-the-agent-set-it-up).
+- **Run one command.** A helper does the mechanical steps and tells you what is left; on Windows it is a double-click. Jump to [One command](#one-command).
 - **Do every step by hand.** Full control, nothing hidden. Jump to [By hand, step by step](#by-hand-step-by-step).
 
 Whichever you pick, you finish with the same short list of your-call decisions in [Fill your rules](#fill-your-rules), then onboard your first project.
 
-## One command
-
-A setup helper ships in the template. Run it with no arguments and it creates your root at the default, `Forge` in your home folder, then does the rest of the mechanical setup, announcing its plan before it touches anything and printing each step as it runs:
-
-- Creates your root (the default, or the path you pass with `-Root` on Windows, `--root` on macOS or Linux) and copies the template into it, so the constitution `CLAUDE.md` sits at the top.
-- Runs `git init -b main` there and makes the first commit.
-- Installs the harness pieces into `~/.claude` (the onboarding and rules-interview skills, the four model-routing seats, the `/model-routing` command).
-- Writes a `settings.generated.json` into your root with your paths and user already filled in, using forward slashes so the JSON is valid. If you have no `~/.claude/settings.json` yet, it writes one there too. If you already have one, it MERGES the Forge wiring into it: everything of yours stays, new entries are added, and where a value truly conflicts the Forge value wins and the script prints exactly what changed.
-
-It is safe around an existing `~/.claude`: identical files are skipped, and anything it replaces (including your settings file before a merge) is backed up first to a timestamped folder it names in its output. Re-running it is safe.
-
-Run it from the folder you unzipped into.
-
-Windows (PowerShell):
-
-```powershell
-.\template\tools\setup.ps1
-```
-
-If PowerShell blocks the script, run it this way instead:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\template\tools\setup.ps1
-```
-
-macOS or Linux:
-
-```bash
-bash template/tools/setup.sh
-```
-
-To put the workspace somewhere other than the default, add the path: `-Root D:/Forge` on Windows, `--root ~/somewhere/forge` on macOS or Linux.
-
-It finishes by printing where everything landed and your remaining steps, which are the same ones in [Fill your rules](#fill-your-rules).
-
 ## Let the agent set it up
 
-If you would rather not touch the command line, let the agent do the mechanical work. Open a Claude Code session in the folder you unzipped into and paste this:
+If you would rather not touch the command line, let the agent do the mechanical work.
+
+**How to open a session in the unzip folder:** in the Claude Code app or the VS Code extension, open the folder itself (File, then Open Folder). From a terminal instead: on Windows, right-click inside the folder in your file explorer and choose "Open in Terminal"; on a Mac, open Terminal, type `cd ` with a trailing space, drag the folder into the window, and press return. Then run `claude`. You are in the right place if the folder shows `template/` next to `docs/`.
+
+Then paste this:
 
 > Read `docs/quickstart.md` and set up the Forge for me.
 
@@ -81,6 +50,33 @@ This section is written for the agent running that request. If you are a person,
 5. **Fill the settings, then apply them with consent.** Read `.claude-settings-template.json` at the root. Produce the filled version by replacing `<ROOT>` with the root path in forward slashes (so the JSON stays valid), `<YOUR-TRACKER-HUB-PATH>` with `<root>/Claude`, and `<YOUR-USER>` with the OS user, and save it as `settings.generated.json` at the root. Then tell the user, in plain words, what will happen to `~/.claude/settings.json` (their entries survive, Forge entries are added, a true conflict resolves to the Forge value and is printed, and the current file is backed up to a timestamped folder before anything is replaced) and ask for an explicit yes. On yes, run `node tools/merge-settings.mjs <settings-path> settings.generated.json --apply` from the root, where `<settings-path>` is the full expanded absolute path to `~/.claude/settings.json` (for example `C:/Users/<you>/.claude/settings.json` on Windows; a literal `~` is refused, because shells do not expand it for node); the tool does the backup, the merge, and the swap itself, and on any error it exits without touching the file. Relay its printed changes, any CONFLICT lines, and the backup location. Never edit their settings by hand, and if the tool fails, report it and stop. Without a yes, leave `settings.generated.json` where it is and say so. Hooks take effect from the next session either way.
 6. **Offer the rules interview.** Offer to run the rules interview now (the `forge-rules` skill installed in step 4): it asks for their hard lines, never-publish list, persona names, and craft rules in plain words and writes each answer to its file, echoing back every write. If they would rather do it later, point at [Fill your rules](#fill-your-rules); either way the git gate keeps blocking gated operations until `hooks/hard-lines.txt` carries their hard lines.
 7. **Echo back, then hand over the keys.** Close with a short, editable summary of what was copied and installed, what happened to the settings (applied, naming the backup folder, or left as `settings.generated.json` with the apply command from step 5 to run later), and the exact next action (open a new session and onboard a project, with applying the settings first if they were deferred). End that same final message with the recommended ways of working from [`using-the-forge.md`](using-the-forge.md), one line per item (the action and what it buys), so the user finishes setup knowing how to drive the layer.
+
+## One command
+
+A setup helper ships in the template. Run it with no arguments and it creates your root at the default, `Forge` in your home folder, then does the rest of the mechanical setup, announcing its plan before it touches anything and printing each step as it runs:
+
+- Creates your root (the default, or the path you pass with `-Root` on Windows, `--root` on macOS or Linux) and copies the template into it, so the constitution `CLAUDE.md` sits at the top.
+- Runs `git init -b main` there and makes the first commit.
+- Installs the harness pieces into `~/.claude` (the onboarding and rules-interview skills, the four model-routing seats, the `/model-routing` command).
+- Writes a `settings.generated.json` into your root with your paths and user already filled in, using forward slashes so the JSON is valid. If you have no `~/.claude/settings.json` yet, it writes one there too. If you already have one, it MERGES the Forge wiring into it: everything of yours stays, new entries are added, and where a value truly conflicts the Forge value wins and the script prints exactly what changed.
+
+It is safe around an existing `~/.claude`: identical files are skipped, and anything it replaces (including your settings file before a merge) is backed up first to a timestamped folder it names in its output. Re-running it is safe. It stops up front, changing nothing, if Node.js is missing.
+
+Windows: in the unzipped folder, open `template`, then `tools`, and double-click `setup.cmd`. It runs the same helper in a window that stays open so you can read the output. From a PowerShell terminal in the unzipped folder instead:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\template\tools\setup.ps1
+```
+
+macOS or Linux, from a terminal in the unzipped folder:
+
+```bash
+bash template/tools/setup.sh
+```
+
+To put the workspace somewhere other than the default, use a terminal form and add the path: `-Root D:/Forge` on Windows, `--root ~/somewhere/forge` on macOS or Linux.
+
+It finishes by printing where everything landed and your remaining steps, which are the same ones in [Fill your rules](#fill-your-rules).
 
 ## By hand, step by step
 
@@ -128,7 +124,7 @@ The full replacement order, and what not to customize early, is in [`customize-f
 
 ## Onboard your first project
 
-Paste or clone the project into `Projects/<Name>/<repo>/` inside your root. Open an agent session at your root and say: "onboard `<Name>`". The skill scans the code read-only, drafts the project's bible from what the code actually shows, creates the tracker and the workspace pointer, registers the repo in the composition manifest, and ends with an editable summary for you to correct. It will not restyle or "clean up" anything in your code; that is the layer's headline rule.
+Paste or clone the project into `Projects/<Name>/<repo>/` inside your root. Open an agent session at your root and say: "onboard `<Name>`". The skill scans the code read-only, drafts the project's bible from what the code actually shows, creates the tracker and the workspace pointer, registers the repo in the composition manifest, and ends with an editable summary for you to correct. It will not restyle or "clean up" anything in your code; that is the layer's headline rule. A pasted folder with no git history is fine too; the skill offers to start one, only with your yes, so future changes become reversible.
 
 **Expected first-run output, so nothing alarms you:** the onboarding's manifest step prints a "NO remote" line for any repo without a configured remote. For your project repos that warning is real (unpushed work is your loss surface); for the root repo it just means you have not pushed the workspace itself yet.
 

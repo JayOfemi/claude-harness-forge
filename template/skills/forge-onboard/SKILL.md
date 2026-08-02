@@ -23,7 +23,7 @@ Bring an existing project under governance in one pass. The output bar: after th
 
 ### 1. Locate and confirm
 
-Identify the project: the folder under `Projects/` the user named, or the one without a `CLAUDE.md` pointer. Inside it, find the repo or repos (dirs with `.git`). If the workspace folder IS the repo (no wrapper), note it - the pointer placement differs (step 5). If nothing under `Projects/` matches, say so and stop; never guess at a path.
+Identify the project: the folder under `Projects/` the user named, or the one without a `CLAUDE.md` pointer. Inside it, find the repo or repos (dirs with `.git`). If the workspace folder IS the repo (no wrapper), note it - the pointer placement differs (step 5). If NO `.git` exists anywhere under it (a pasted plain folder), say so plainly and offer, on an explicit yes, to run `git init` plus a first commit, framed for a human: history is what makes every later change to their files reversible. Init where the paste shape puts the repo: a wrapper-shaped paste gets the init inside the inner code folder (the repo lands at `Projects/<Name>/<repo>/`, the standard shape); a direct paste with the files at `Projects/<Name>/` itself gets the init there, and step 5's in-repo rules then apply. If they decline, continue without a repo, skip the manifest registration in step 6, and carry the choice and its loss surface in the echo-back. If nothing under `Projects/` matches, say so and stop; never guess at a path.
 
 ### 2. Scan the reality (read-only)
 
@@ -52,7 +52,7 @@ Per `STANDARDS/tracker-format.md` (the bible routes; depth stays in the repo's o
 
 ### 5. Write the workspace pointer
 
-`Projects/<Name>/CLAUDE.md`: the standard three-layer pointer. If another project already has one, copy its shape; in a fresh workspace, use this template verbatim (adjust only the project name):
+`Projects/<Name>/CLAUDE.md`: the standard three-layer pointer. **Whatever the layout, never overwrite: if a `CLAUDE.md` already exists at the pointer's target path, STOP, show it, and ask how to reconcile.** If another project already has one, copy its shape; in a fresh workspace, use this template verbatim (adjust only the project name):
 
 ```
 DO NOT SIMPLY ACKNOWLEDGE THIS POINTER AND MOVE ON. AT THE START OF EVERY SESSION AND AFTER EVERY COMPACT, READ ALL CONTENT INSIDE THE FILES THIS POINTER POINTS TO.
@@ -60,11 +60,11 @@ DO NOT SIMPLY ACKNOWLEDGE THIS POINTER AND MOVE ON. AT THE START OF EVERY SESSIO
 Read `../../CLAUDE.md` first (the constitution - agent behavior and workspace structure), then `../../Claude/CLAUDE.md` (the craft globals - wording, coding style, commit rules), then `../../Claude/<Name>/CLAUDE.md` for this project's rules, conventions, and startup protocol. All three layers are binding at all times. Those files are the source of truth - this one is just a pointer. If you cannot find any of them, say so in your response.
 ```
 
-If the workspace folder is itself the repo, place the pointer INSIDE the repo root instead and note in the bible that the project predates the wrapper convention.
+If the workspace folder is itself the repo (or is an unversioned direct paste), the pointer must live INSIDE the adopter's own folder, the one write this skill ever makes there. The never-overwrite rule above applies; when the target is clear, announce the single file you are about to add and get a yes before writing. Note in the bible that the project predates the wrapper convention.
 
 ### 6. Register the composition
 
-Run `node tools/forge-worktree.mjs init` from the root - AFTER step 5, because the manifest's glue scan reads the pointer you just wrote. If the manifest reports the project repo has NO remote, surface that in the echo-back - unpushed work is the adopter's loss surface (a missing remote on the ROOT repo just means the adopter has not pushed the workspace itself yet; mention it once, calmly). Commit the updated manifest together with the tracker files as the onboarding commit.
+Run `node tools/forge-worktree.mjs init` from the root - AFTER step 5, because the manifest's glue scan reads the pointer you just wrote. (If the owner declined a repo in step 1, skip the manifest run, say so in the echo-back, and still commit the tracker files in the hub as the onboarding commit.) If the manifest reports the project repo has NO remote, surface that in the echo-back - unpushed work is the adopter's loss surface (a missing remote on the ROOT repo just means the adopter has not pushed the workspace itself yet; mention it once, calmly). Commit the updated manifest together with the tracker files as the onboarding commit.
 
 ### 7. Echo back (intent intake, applied to onboarding)
 
@@ -87,4 +87,4 @@ Offer it, never run it unprompted; it writes into the user's `~/.claude`. If the
 
 ## Done-when
 
-The pointer resolves to the bible; the bible passes the tracker-format shape; the manifest lists the repo; the session log carries the onboarding entry with its resume point; and the owner has seen the echo-back. Nothing inside the project's repo was modified.
+The pointer resolves to the bible; the bible passes the tracker-format shape; the manifest lists the repo (or the echo-back names the owner's no-repo choice); the session log carries the onboarding entry with its resume point; and the owner has seen the echo-back. No existing file inside the project's folder was modified, repo or not; the only permitted writes there are the consented, brand-new pointer of step 5 and the consented `git init` of step 1.

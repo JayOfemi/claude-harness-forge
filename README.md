@@ -27,11 +27,11 @@ The Forge is files. There is no server, no background process, and no account. C
 
 ## Get set up
 
-From zero to a governed workspace with your first project onboarded in about five minutes. Whichever way you pick, setup writes to the same two places. It creates a workspace folder, a `Forge` folder in your home folder by default (or any path you choose), and it installs the agent-facing pieces and your settings into Claude Code's `~/.claude` folder. Three ways to do it, from least effort to most control. The full walkthrough, including what each path leaves for you to decide, is in [`docs/quickstart.md`](docs/quickstart.md).
+From zero to a governed workspace with your first project onboarded in about five minutes. Whichever way you pick, setup writes to the same two places. It creates a workspace folder, a `Forge` folder in your home folder by default (or any path you choose), and it installs the agent-facing pieces and your settings into Claude Code's `~/.claude` folder. Three ways to do it, from least effort to most control; when unsure, let the agent do it. The full walkthrough, including what each path leaves for you to decide, is in [`docs/quickstart.md`](docs/quickstart.md).
 
-You need Claude Code, git, and Node.js on your PATH (the enforcement hooks are small Node scripts).
+You need Claude Code, git, and Node.js on your PATH (the enforcement hooks are small Node scripts); setup stops before touching anything if Node.js is missing, and warns if git is.
 
-**Let your agent do it.** Open a Claude Code session in the folder you cloned or unzipped and say (name a different root in the same message if you do not want the default):
+**Let your agent do it.** Open a Claude Code session in the folder you cloned or unzipped (the one showing `template/` next to `docs/`) and say (name a different root in the same message if you do not want the default):
 
 > Read `docs/quickstart.md` and set up the Forge for me.
 
@@ -39,10 +39,10 @@ It copies the template into your root, initializes git, installs the `~/.claude`
 
 **Or run one command.** A setup helper creates the workspace at the default (or at a path you pass with `-Root` / `--root`), does the same mechanical steps, announces its plan before it runs, and closes by printing where everything went and what is left. It is safe around an existing `~/.claude`: anything it replaces is backed up first, and an existing `settings.json` is merged rather than overwritten, with every change printed.
 
-Windows (PowerShell), and if it is blocked, prefix with `powershell -ExecutionPolicy Bypass -File`:
+Windows: double-click `template\tools\setup.cmd`, or from a terminal:
 
 ```powershell
-.\template\tools\setup.ps1
+powershell -ExecutionPolicy Bypass -File .\template\tools\setup.ps1
 ```
 
 macOS or Linux:

@@ -1,3 +1,5 @@
 # Shell scripts must stay LF so they run on macOS and Linux from any platform,
 # including the setup helper at tools/setup.sh.
 *.sh text eol=lf
+# Windows batch files must stay CRLF for cmd.exe.
+*.cmd text eol=crlf

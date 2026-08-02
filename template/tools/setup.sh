@@ -42,6 +42,9 @@ case "$ROOT" in "~") ROOT="$HOME" ;; "~/"*) ROOT="$HOME/${ROOT#\~/}" ;; esac
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 [ -f "$TEMPLATE_DIR/CLAUDE.md" ] || die "cannot find the template next to this script (expected $TEMPLATE_DIR/CLAUDE.md). Run this from where you extracted the download."
+# The enforcement hooks and the settings merge are Node scripts; without Node
+# the layer cannot enforce anything, so stop before touching the disk.
+command -v node >/dev/null 2>&1 || die "Node.js is required (the enforcement hooks and the settings merge are Node scripts). Install it from nodejs.org, then run this again; re-running is safe."
 
 say "Forge setup"
 say "  template source: $TEMPLATE_DIR"
@@ -106,12 +109,6 @@ else
 	if ! git -C "$ROOT_ABS" commit -m "Initial Forge workspace" >/dev/null 2>&1; then
 		warn "could not create the first commit (is your git user.name and user.email set?). Commit yourself later with: git -C \"$ROOT_ABS\" commit -m \"Initial Forge workspace\""
 	fi
-fi
-
-# The enforcement hooks are Node scripts, so warn now if Node is missing rather
-# than let every gate silently no-op at session time.
-if ! command -v node >/dev/null 2>&1; then
-	warn "Node.js was not found on your PATH. The enforcement hooks are small Node scripts, so install Node.js (nodejs.org) before your next session or they will not run."
 fi
 
 # 5. Install the harness pieces into ~/.claude (the front door, the routing
@@ -194,46 +191,40 @@ else
 	if [ -f "$GLOBAL" ]; then
 		# Merge, never clobber: your settings survive, Forge entries are added,
 		# and a real conflict resolves Forge-wins with a printed CONFLICT line.
-		if ! command -v node >/dev/null 2>&1; then
-			warn "node is missing, so the settings merge was skipped. Merge the hooks, permissions, and env blocks from $GEN into $GLOBAL by hand."
-		else
-			TMP="$ROOT_ABS/settings.merged.tmp.json"
-			if MERGE_OUT="$(node "$ROOT_ABS/tools/merge-settings.mjs" "$GLOBAL" "$GEN" "$TMP" 2>&1)"; then
-				printf '%s\n' "$MERGE_OUT" | while IFS= read -r line; do
-					case "$line" in
-						CONFLICT*) warn "$line" ;;
-						*) step "$line" ;;
-					esac
-				done
-				if cmp -s "$TMP" "$GLOBAL"; then
-					rm -f "$TMP"
-				else
-					backup_target "$GLOBAL" "settings.json"
-					mv "$TMP" "$GLOBAL"
-					step "merged the Forge wiring into $GLOBAL (your original is backed up)"
-				fi
-			else
+		TMP="$ROOT_ABS/settings.merged.tmp.json"
+		if MERGE_OUT="$(node "$ROOT_ABS/tools/merge-settings.mjs" "$GLOBAL" "$GEN" "$TMP" 2>&1)"; then
+			printf '%s\n' "$MERGE_OUT" | while IFS= read -r line; do
+				case "$line" in
+					CONFLICT*) warn "$line" ;;
+					*) step "$line" ;;
+				esac
+			done
+			if cmp -s "$TMP" "$GLOBAL"; then
 				rm -f "$TMP"
-				warn "settings merge failed ($MERGE_OUT). $GLOBAL is left untouched; merge the hooks, permissions, and env blocks from $GEN by hand."
+			else
+				backup_target "$GLOBAL" "settings.json"
+				mv "$TMP" "$GLOBAL"
+				step "merged the Forge wiring into $GLOBAL (your original is backed up)"
 			fi
+		else
+			rm -f "$TMP"
+			warn "settings merge failed ($MERGE_OUT). $GLOBAL is left untouched; merge the hooks, permissions, and env blocks from $GEN by hand."
 		fi
 	else
 		mkdir -p "$CLAUDE_DIR"
 		# Fresh writes route through the merge tool too, so _instructions
 		# (setup guidance, not wiring) never lands in a deployed settings file.
 		wrote=0
-		if command -v node >/dev/null 2>&1; then
-			EMPTY="$ROOT_ABS/settings.empty.tmp.json"
-			TMP="$ROOT_ABS/settings.merged.tmp.json"
-			printf '%s\n' "{}" > "$EMPTY"
-			if node "$ROOT_ABS/tools/merge-settings.mjs" "$EMPTY" "$GEN" "$TMP" >/dev/null 2>&1; then
-				mv "$TMP" "$GLOBAL"
-				wrote=1
-			else
-				rm -f "$TMP"
-			fi
-			rm -f "$EMPTY"
+		EMPTY="$ROOT_ABS/settings.empty.tmp.json"
+		TMP="$ROOT_ABS/settings.merged.tmp.json"
+		printf '%s\n' "{}" > "$EMPTY"
+		if node "$ROOT_ABS/tools/merge-settings.mjs" "$EMPTY" "$GEN" "$TMP" >/dev/null 2>&1; then
+			mv "$TMP" "$GLOBAL"
+			wrote=1
+		else
+			rm -f "$TMP"
 		fi
+		rm -f "$EMPTY"
 		if [ "$wrote" -eq 0 ]; then
 			printf '%s\n' "$content" > "$GLOBAL"
 			warn "wrote the settings as-is; delete the _instructions key from it after reading"
