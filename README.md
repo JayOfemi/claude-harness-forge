@@ -23,7 +23,7 @@ The Forge is files. There is no server, no background process, and no account. C
 | The roles | `Agents/AGENT_ROLES.md` | Charters for a council (a chair, a skeptic, a treasurer) and staff you summon by name to stress-test plans or keep the workspace clean |
 | The hooks | `hooks/` + your settings file | The enforcement layer: a session-start index injector, a style gate that lints only newly introduced text, an intake nudge, a write-back gate, a git gate carrying your hard lines, a config tripwire, a directory gate that flags folders added mid-session, a load audit, a reply gate that bounces bloated answers with the word count, and a token reporter plus handoff pair that surface what every turn cost |
 | The routing seats | `subagents/` + `commands/` | Four subagents, dynamic by default: nothing runs above your session's own tier, planning and review ride it exactly, exploration stays on the cheap floor, execution runs capped at it. The `/model-routing` command reports the seats, pins any of them to a fixed model, or frees them back to dynamic |
-| The tools | `tools/` + `skills/` | A one-command setup helper, the onboarding skill that reads a pasted project and drafts its tracker, the never-publish sweep, and a workspace composer for multi-repo setups |
+| The tools | `tools/` + `skills/` | A one-command setup helper, the onboarding skill that reads a pasted project and drafts its tracker, the rules interview that fills your rule files from a chat, the never-publish sweep, and a workspace composer for multi-repo setups |
 
 ## Get set up
 
@@ -35,7 +35,7 @@ You need Claude Code, git, and Node.js on your PATH (the enforcement hooks are s
 
 > Read `docs/quickstart.md` and set up the Forge for me.
 
-It copies the template into your root, initializes git, installs the `~/.claude` pieces, drafts your settings for you to apply, and closes by listing the best ways to use your new workspace. No command line.
+It copies the template into your root, initializes git, installs the `~/.claude` pieces, applies your settings after showing you the plan and getting your yes (your current file is backed up first), and closes by listing the best ways to use your new workspace. No command line.
 
 **Or run one command.** A setup helper creates the workspace at the default (or at a path you pass with `-Root` / `--root`), does the same mechanical steps, announces its plan before it runs, and closes by printing where everything went and what is left. It is safe around an existing `~/.claude`: anything it replaces is backed up first, and an existing `settings.json` is merged rather than overwritten, with every change printed.
 
@@ -53,7 +53,7 @@ bash template/tools/setup.sh
 
 **Or do it by hand.** The step-by-step version, with the JSON path traps defused, is in [`docs/quickstart.md`](docs/quickstart.md).
 
-Whichever you pick, you finish by filling in the parts only you decide (your craft rules, your git-gate hard lines, your never-publish list), then onboard your first project with one line: open a session at your root and say "onboard `<Name>`". The skill scans the code read-only, drafts the project's bible from what the code shows, and ends with an editable summary. It will not restyle anything in your code; that is the layer's headline rule.
+Whichever you pick, you finish by filling in the parts only you decide (your hard lines, your never-publish list, your craft rules); saying "fill my rules" in a session at your root runs the rules interview, which asks for each in plain words and writes it for you. Then onboard your first project with one line: open a session at your root and say "onboard `<Name>`". The skill scans the code read-only, drafts the project's bible from what the code shows, and ends with an editable summary. It will not restyle anything in your code; that is the layer's headline rule.
 
 **Then round out the kit.** The governance pieces install with the template. The author's day-to-day skills and commands ship separately as the free [Toolbox](https://www.npmjs.com/package/@jayofemi/toolbox) on npm; add the pieces the template does not already install with `npx @jayofemi/toolbox add wording gatekeeper reroute-task ask-model screenshot startup`. Leave the catalog's routing seats and `/model-routing` to the template, since the toolbox overwrites without a backup.
 

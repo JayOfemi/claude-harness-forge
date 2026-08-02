@@ -3,16 +3,41 @@
 // so the setup helpers never clobber a settings file an adopter already has.
 //
 //   node merge-settings.mjs <yours.json> <forge.json> <out.json>
+//   node merge-settings.mjs <target.json> <forge.json> --apply
 //
 // Additive by design: everything already in <yours.json> survives; Forge
 // permission and hook entries are appended, missing env keys added. A true
 // conflict (same key, different value) resolves Forge-wins and prints a
 // CONFLICT line; every change is printed, nothing merges silently.
-import { readFileSync, writeFileSync } from "node:fs";
+//
+// --apply merges straight into <target.json> (a missing target is treated as
+// empty and created): the current file is backed up to a timestamped folder
+// beside it BEFORE anything is replaced, the merged result lands via a temp
+// file and rename, and any error exits nonzero with the target untouched.
+import {
+	readFileSync,
+	writeFileSync,
+	existsSync,
+	lstatSync,
+	realpathSync,
+	mkdirSync,
+	copyFileSync,
+	renameSync,
+	unlinkSync,
+} from "node:fs";
+import { dirname, join, basename, resolve } from "node:path";
 
-const [yoursPath, forgePath, outPath] = process.argv.slice(2);
-if (!yoursPath || !forgePath || !outPath) {
-	console.error("usage: merge-settings.mjs <yours.json> <forge.json> <out.json>");
+const rawArgs = process.argv.slice(2);
+const apply = rawArgs.includes("--apply");
+const paths = rawArgs.filter((a) => a !== "--apply");
+const [yoursPath, forgePath, outPath] = paths;
+const usable = apply
+	? paths.length === 2 && yoursPath && forgePath
+	: paths.length === 3 && yoursPath && forgePath && outPath;
+if (!usable) {
+	console.error(
+		"usage: merge-settings.mjs <yours.json> <forge.json> <out.json>\n       merge-settings.mjs <target.json> <forge.json> --apply"
+	);
 	process.exit(2);
 }
 
@@ -28,10 +53,12 @@ function load(path) {
 	return parsed;
 }
 
+const targetExists = existsSync(yoursPath);
 let yours;
 let forge;
 try {
-	yours = load(yoursPath);
+	// In apply mode a missing target is the fresh-install case, not an error.
+	yours = apply && !targetExists ? {} : load(yoursPath);
 } catch (err) {
 	console.error(`cannot read ${yoursPath}: ${err.message}`);
 	process.exit(1);
@@ -175,9 +202,73 @@ for (const [key, value] of Object.entries(forge)) {
 	}
 }
 
-// Zero changes emit the original bytes verbatim, so a caller comparing the
-// output against the original sees them identical and leaves the file alone.
-if (report.length === 0) {
+if (apply) {
+	if (report.length === 0 && targetExists) {
+		console.log("nothing to merge, your settings already carry the Forge wiring");
+		process.exit(0);
+	}
+	let targetAbs = resolve(yoursPath);
+	// A literal ~ segment means the shell never expanded the path; creating a
+	// "~" folder and reporting success would hide the mis-target (fail loud).
+	if (targetAbs.split(/[\\/]/).includes("~")) {
+		console.error(`apply refused: ${yoursPath} carries a literal "~" your shell did not expand. Pass the full absolute path to your settings file.`);
+		process.exit(1);
+	}
+	if (targetExists) {
+		// Follow a symlinked settings file so the swap lands in the real file
+		// instead of silently replacing the link with a plain copy.
+		targetAbs = realpathSync(targetAbs);
+	} else {
+		let lingering = false;
+		try {
+			lstatSync(targetAbs);
+			lingering = true;
+		} catch {}
+		if (lingering) {
+			console.error(`apply refused: ${targetAbs} is a broken link; fix or remove it by hand first.`);
+			process.exit(1);
+		}
+		// The blessed fresh case is a missing settings.json inside an existing
+		// folder; a missing folder means a mistyped target, never a fresh install.
+		if (!existsSync(dirname(targetAbs))) {
+			console.error(`apply refused: the folder ${dirname(targetAbs)} does not exist. Pass the full absolute path to your settings file.`);
+			process.exit(1);
+		}
+	}
+	const dir = dirname(targetAbs);
+	const tmp = join(dir, ".forge-merge.tmp.json");
+	try {
+		if (targetExists) {
+			const stamp = new Date()
+				.toISOString()
+				.replace(/[-:]/g, "")
+				.replace("T", "-")
+				.slice(0, 15);
+			const backupDir = join(dir, `forge-setup-backup-${stamp}`);
+			mkdirSync(backupDir, { recursive: true });
+			copyFileSync(targetAbs, join(backupDir, basename(targetAbs)));
+			console.log(`backed up ${targetAbs} to ${backupDir}`);
+		}
+		writeFileSync(tmp, JSON.stringify(merged, null, 2) + "\n");
+		renameSync(tmp, targetAbs);
+	} catch (err) {
+		try {
+			unlinkSync(tmp);
+		} catch {}
+		console.error(`apply failed, ${targetAbs} is untouched: ${err.message}`);
+		process.exit(1);
+	}
+	for (const line of report) {
+		console.log(line);
+	}
+	console.log(
+		targetExists
+			? `${report.length} change(s) applied to ${targetAbs}`
+			: `wrote ${targetAbs} (you had none)`
+	);
+} else if (report.length === 0) {
+	// Zero changes emit the original bytes verbatim, so a caller comparing the
+	// output against the original sees them identical and leaves the file alone.
 	writeFileSync(outPath, readFileSync(yoursPath));
 	console.log("nothing to merge, your settings already carry the Forge wiring");
 } else {

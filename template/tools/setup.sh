@@ -66,13 +66,28 @@ say ""
 say "About to (anything already in place is kept as is):"
 say "  1. copy the template into $ROOT_ABS, which becomes your workspace root"
 say "  2. start a git repo there and make the first commit"
-say "  3. install the harness pieces into $CLAUDE_DIR (the onboarding skill, the routing seats, the /model-routing command)"
+say "  3. install the harness pieces into $CLAUDE_DIR (the onboarding and rules-interview skills, the routing seats, the /model-routing command)"
 say "  4. fill in your settings (an existing settings.json is merged, never overwritten; anything replaced is backed up first)"
 say ""
 
 # 3. Copy the template contents into the root (constitution lands at the root).
 if [ "$ALREADY_FORGE" -eq 1 ]; then
 	step "root is already a Forge, refreshing the harness pieces and settings without re-copying (your filled-in files stay)"
+	# New-in-a-later-release template files an older root lacks: add them when
+	# absent (a filled-in copy is never touched), so the closing steps stay true.
+	for rel in "hooks/hard-lines.txt" "skills/forge-rules"; do
+		if [ -e "$TEMPLATE_DIR/$rel" ] && [ ! -e "$ROOT_ABS/$rel" ]; then
+			mkdir -p "$(dirname "$ROOT_ABS/$rel")"
+			cp -R "$TEMPLATE_DIR/$rel" "$ROOT_ABS/$rel"
+			step "added $rel (new since this root was set up)"
+		fi
+	done
+	# An older gate still carrying the inline placeholder holds nothing of the
+	# adopter's, so it is safe to swap for the version that reads the data file.
+	if [ -f "$ROOT_ABS/hooks/git-gate.mjs" ] && grep -qF "The hard lines: <YOUR-HARD-LINES>" "$ROOT_ABS/hooks/git-gate.mjs"; then
+		cp "$TEMPLATE_DIR/hooks/git-gate.mjs" "$ROOT_ABS/hooks/git-gate.mjs"
+		step "updated hooks/git-gate.mjs (it was unconfigured; hard lines now live in hooks/hard-lines.txt)"
+	fi
 else
 	step "copying the template into the root"
 	cp -R "$TEMPLATE_DIR/." "$ROOT_ABS/"
@@ -155,6 +170,7 @@ install_md() { # <src-dir-rel> <dest-sub> <label>
 say ""
 say "Installing the harness pieces into $CLAUDE_DIR"
 install_dir "skills/forge-onboard" "skills"   "the onboarding skill"
+install_dir "skills/forge-rules"   "skills"   "the rules-interview skill"
 install_md  "subagents"            "agents"   "the model-routing seats"
 install_md  "commands"             "commands" "the /model-routing command"
 
@@ -230,14 +246,14 @@ fi
 say ""
 say "Done with the mechanical parts. Where everything went:"
 say "  your workspace root: $ROOT_ABS (the whole layer lives here; open agent sessions here)"
-say "  for Claude Code:     $CLAUDE_DIR (the skill, the seats, the command, your settings)"
+say "  for Claude Code:     $CLAUDE_DIR (the skills, the seats, the command, your settings)"
 say ""
 say "What is left for you (paths are inside your workspace root):"
 say "  1. Settings: review ~/.claude/settings.json (written or merged above; any"
 say "     CONFLICT lines show where a Forge value replaced yours). The Forge-only"
 say "     reference copy is settings.generated.json in your root."
-say "  2. Hard lines: open hooks/git-gate.mjs and replace <YOUR-HARD-LINES>"
-say "     with the git operations an agent must never do alone."
+say "  2. Hard lines: put the git operations an agent must never do alone into"
+say "     hooks/hard-lines.txt (or say 'fill my rules' in your first session and the interview writes them)."
 say "  3. Craft rules: fill the <YOUR-*> sections in Claude/CLAUDE.md. A worked"
 say "     example lives in the examples/ folder from the download (beside template/)."
 say "  4. Roles: name the personas in Agents/AGENT_ROLES.md (optional now)."

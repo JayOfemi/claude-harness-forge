@@ -66,7 +66,7 @@ Say ""
 Say "About to (anything already in place is kept as is):"
 Say "  1. copy the template into $RootAbs, which becomes your workspace root"
 Say "  2. start a git repo there and make the first commit"
-Say "  3. install the harness pieces into $ClaudeDir (the onboarding skill, the routing seats, the /model-routing command)"
+Say "  3. install the harness pieces into $ClaudeDir (the onboarding and rules-interview skills, the routing seats, the /model-routing command)"
 Say "  4. fill in your settings (an existing settings.json is merged, never overwritten; anything replaced is backed up first)"
 Say ""
 
@@ -92,6 +92,24 @@ if (-not $RootExists) {
 # 3. Copy the template contents into the root (constitution lands at the root).
 if ($AlreadyForge) {
 	Step "root is already a Forge, refreshing the harness pieces and settings without re-copying (your filled-in files stay)"
+	# New-in-a-later-release template files an older root lacks: add them when
+	# absent (a filled-in copy is never touched), so the closing steps stay true.
+	foreach ($rel in @("hooks/hard-lines.txt", "skills/forge-rules")) {
+		$src = Join-Path $TemplateDir $rel
+		$dst = Join-Path $RootAbs $rel
+		if ((Test-Path -LiteralPath $src) -and -not (Test-Path -LiteralPath $dst)) {
+			New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dst) | Out-Null
+			Copy-Item -LiteralPath $src -Destination $dst -Recurse -Force
+			Step "added $rel (new since this root was set up)"
+		}
+	}
+	# An older gate still carrying the inline placeholder holds nothing of the
+	# adopter's, so it is safe to swap for the version that reads the data file.
+	$gate = Join-Path $RootAbs "hooks/git-gate.mjs"
+	if ((Test-Path -LiteralPath $gate) -and (Select-String -LiteralPath $gate -Pattern "The hard lines: <YOUR-HARD-LINES>" -SimpleMatch -Quiet)) {
+		Copy-Item -LiteralPath (Join-Path $TemplateDir "hooks/git-gate.mjs") -Destination $gate -Force
+		Step "updated hooks/git-gate.mjs (it was unconfigured; hard lines now live in hooks/hard-lines.txt)"
+	}
 } else {
 	Step "copying the template into the root"
 	Get-ChildItem -Force -LiteralPath $TemplateDir | ForEach-Object {
@@ -205,6 +223,7 @@ function InstallFiles([string]$srcRel, [string]$destSub, [string]$label) {
 Say ""
 Say "Installing the harness pieces into $ClaudeDir"
 InstallDir   "skills/forge-onboard" "skills"   "the onboarding skill"
+InstallDir   "skills/forge-rules"   "skills"   "the rules-interview skill"
 InstallFiles "subagents"            "agents"   "the model-routing seats"
 InstallFiles "commands"             "commands" "the /model-routing command"
 
@@ -290,14 +309,14 @@ if (-not (Test-Path -LiteralPath $tpl)) {
 Say ""
 Say "Done with the mechanical parts. Where everything went:"
 Say "  your workspace root: $RootAbs (the whole layer lives here; open agent sessions here)"
-Say "  for Claude Code:     $ClaudeDir (the skill, the seats, the command, your settings)"
+Say "  for Claude Code:     $ClaudeDir (the skills, the seats, the command, your settings)"
 Say ""
 Say "What is left for you (paths are inside your workspace root):"
 Say "  1. Settings: review ~/.claude/settings.json (written or merged above; any"
 Say "     CONFLICT lines show where a Forge value replaced yours). The Forge-only"
 Say "     reference copy is settings.generated.json in your root."
-Say "  2. Hard lines: open hooks/git-gate.mjs and replace <YOUR-HARD-LINES>"
-Say "     with the git operations an agent must never do alone."
+Say "  2. Hard lines: put the git operations an agent must never do alone into"
+Say "     hooks/hard-lines.txt (or say 'fill my rules' in your first session and the interview writes them)."
 Say "  3. Craft rules: fill the <YOUR-*> sections in Claude/CLAUDE.md. A worked"
 Say "     example lives in the examples/ folder from the download (beside template/)."
 Say "  4. Roles: name the personas in Agents/AGENT_ROLES.md (optional now)."

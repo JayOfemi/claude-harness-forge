@@ -15,7 +15,7 @@ Everything below assumes you have downloaded and unzipped the template (or clone
 Whichever path you pick, setup writes to exactly two places on your machine:
 
 - **Your workspace root**: one new folder that the whole template is copied into. The constitution, the standards bank, the trackers, the hooks, and later your projects all live inside it. This guide calls it your root. By default it is a `Forge` folder in your home folder (`C:/Users/<you>/Forge` on Windows, `~/Forge` on macOS or Linux); every path below also lets you choose somewhere else.
-- **Claude Code's `~/.claude` folder** in your user profile: the onboarding skill, the four model-routing seats, the `/model-routing` command, and your settings land there, because that is where Claude Code looks for them.
+- **Claude Code's `~/.claude` folder** in your user profile: the two skills (the project onboarder and the rules interview), the four model-routing seats, the `/model-routing` command, and your settings land there, because that is where Claude Code looks for them.
 
 Three ways to set up, all reaching the same place. Skim them and pick one.
 
@@ -31,7 +31,7 @@ A setup helper ships in the template. Run it with no arguments and it creates yo
 
 - Creates your root (the default, or the path you pass with `-Root` on Windows, `--root` on macOS or Linux) and copies the template into it, so the constitution `CLAUDE.md` sits at the top.
 - Runs `git init -b main` there and makes the first commit.
-- Installs the harness pieces into `~/.claude` (the onboarding skill, the four model-routing seats, the `/model-routing` command).
+- Installs the harness pieces into `~/.claude` (the onboarding and rules-interview skills, the four model-routing seats, the `/model-routing` command).
 - Writes a `settings.generated.json` into your root with your paths and user already filled in, using forward slashes so the JSON is valid. If you have no `~/.claude/settings.json` yet, it writes one there too. If you already have one, it MERGES the Forge wiring into it: everything of yours stays, new entries are added, and where a value truly conflicts the Forge value wins and the script prints exactly what changed.
 
 It is safe around an existing `~/.claude`: identical files are skipped, and anything it replaces (including your settings file before a merge) is backed up first to a timestamped folder it names in its output. Re-running it is safe.
@@ -68,7 +68,7 @@ If you would rather not touch the command line, let the agent do the mechanical 
 
 Add a line naming your root (for example "My workspace root is `D:/Forge`") only if you want it somewhere other than the default `Forge` folder in your home folder.
 
-The agent follows the procedure below: it confirms the root with you before touching anything, does everything it can automatically, and hands back only the parts that need your input, chiefly your `settings.json` and your own rules.
+The agent follows the procedure below: it confirms the root with you before touching anything, does everything it can automatically, asks before it touches your `~/.claude/settings.json`, and turns the parts only you can decide into questions it asks in chat.
 
 ### Agent setup procedure
 
@@ -77,10 +77,10 @@ This section is written for the agent running that request. If you are a person,
 1. **Confirm the root.** Restate the target root back to the user in one line before touching anything. If they did not give one, use the default, a `Forge` folder in their home folder, and name that path in the restatement.
 2. **Copy the template.** Copy the contents of `template/` into the root so `CLAUDE.md` lands at the root. Do not restyle or "improve" any template file while copying; this layer's headline rule is that you touch only what you were asked to touch.
 3. **Initialize git.** Run `git init -b main` in the root and make the first commit. If git is missing or the commit fails for lack of an identity, say so and move on; it is not a blocker.
-4. **Install the harness pieces.** Copy `skills/forge-onboard/` into `~/.claude/skills/`, the `subagents/*.md` files into `~/.claude/agents/`, and `commands/*.md` into `~/.claude/commands/`.
-5. **Draft the settings, then defer.** Read `.claude-settings-template.json` at the root. Produce the filled version by replacing `<ROOT>` with the root path in forward slashes (so the JSON stays valid), `<YOUR-TRACKER-HUB-PATH>` with `<root>/Claude`, and `<YOUR-USER>` with the OS user. Present the filled content to the user and ask them to save it as `~/.claude/settings.json` (or merge it into the one they have). Do not silently overwrite their global settings. Note that hooks take effect from their next session.
-6. **Offer the rule surfaces.** Offer to fill `Claude/CLAUDE.md` from `examples/craft-globals-example.md` if they want a starting set, and to write their named roles into `Agents/AGENT_ROLES.md` and seed `deny-list.txt` from anything they give you. Leave `<YOUR-HARD-LINES>` in `hooks/git-gate.mjs` for them to state, since only they know their hard lines.
-7. **Echo back, then hand over the keys.** Close with a short, editable summary of what was copied and installed, what you drafted and deferred (the settings), and the exact next action (apply the settings, then open a new session and onboard a project). End that same final message with the recommended ways of working from [`using-the-forge.md`](using-the-forge.md), one line per item (the action and what it buys), so the user finishes setup knowing how to drive the layer.
+4. **Install the harness pieces.** Copy each folder in `skills/` into `~/.claude/skills/` (the project onboarder and the rules interview), the `subagents/*.md` files into `~/.claude/agents/`, and `commands/*.md` into `~/.claude/commands/`.
+5. **Fill the settings, then apply them with consent.** Read `.claude-settings-template.json` at the root. Produce the filled version by replacing `<ROOT>` with the root path in forward slashes (so the JSON stays valid), `<YOUR-TRACKER-HUB-PATH>` with `<root>/Claude`, and `<YOUR-USER>` with the OS user, and save it as `settings.generated.json` at the root. Then tell the user, in plain words, what will happen to `~/.claude/settings.json` (their entries survive, Forge entries are added, a true conflict resolves to the Forge value and is printed, and the current file is backed up to a timestamped folder before anything is replaced) and ask for an explicit yes. On yes, run `node tools/merge-settings.mjs <settings-path> settings.generated.json --apply` from the root, where `<settings-path>` is the full expanded absolute path to `~/.claude/settings.json` (for example `C:/Users/<you>/.claude/settings.json` on Windows; a literal `~` is refused, because shells do not expand it for node); the tool does the backup, the merge, and the swap itself, and on any error it exits without touching the file. Relay its printed changes, any CONFLICT lines, and the backup location. Never edit their settings by hand, and if the tool fails, report it and stop. Without a yes, leave `settings.generated.json` where it is and say so. Hooks take effect from the next session either way.
+6. **Offer the rules interview.** Offer to run the rules interview now (the `forge-rules` skill installed in step 4): it asks for their hard lines, never-publish list, persona names, and craft rules in plain words and writes each answer to its file, echoing back every write. If they would rather do it later, point at [Fill your rules](#fill-your-rules); either way the git gate keeps blocking gated operations until `hooks/hard-lines.txt` carries their hard lines.
+7. **Echo back, then hand over the keys.** Close with a short, editable summary of what was copied and installed, what happened to the settings (applied, naming the backup folder, or left as `settings.generated.json` with the apply command from step 5 to run later), and the exact next action (open a new session and onboard a project, with applying the settings first if they were deferred). End that same final message with the recommended ways of working from [`using-the-forge.md`](using-the-forge.md), one line per item (the action and what it buys), so the user finishes setup knowing how to drive the layer.
 
 ## By hand, step by step
 
@@ -113,13 +113,13 @@ Prefer to do it yourself. These are the same mechanical steps the helper runs.
 
    **Path safety, which is where hand-setup usually breaks.** This file is JSON, so a Windows path like `C:\Workspace` is not safe to paste, because the `\W` reads as a broken escape and the file will not load. Use forward slashes everywhere in this file instead, like `C:/Workspace`; they work the same in the hook commands. Keep the quotes around any path that has a space in it. So `<ROOT>` becomes `C:/Workspace` and `<YOUR-TRACKER-HUB-PATH>` becomes `C:/Workspace/Claude`. Your hooks already sit at `<ROOT>/hooks/` from step 1, which is where this wiring points. Hooks load at session start, so they take effect from your next session.
 
-3. **Install the harness pieces.** From your new root, copy `skills/forge-onboard/` into `~/.claude/skills/` (the front door for every project you bring in), the four files in `subagents/` into `~/.claude/agents/` (the model-routing seats, dynamic by default: nothing runs above your session's tier, planning and review ride it exactly, sweeps stay cheap), and `commands/model-routing.md` into `~/.claude/commands/` (the switch that reports, pins, or frees those seats). The copies at your root stay as the source mirrors.
+3. **Install the harness pieces.** From your new root, copy each folder in `skills/` into `~/.claude/skills/` (`forge-onboard`, the front door for every project you bring in, and `forge-rules`, the interview that fills your rule files), the four files in `subagents/` into `~/.claude/agents/` (the model-routing seats, dynamic by default: nothing runs above your session's tier, planning and review ride it exactly, sweeps stay cheap), and `commands/model-routing.md` into `~/.claude/commands/` (the switch that reports, pins, or frees those seats). The copies at your root stay as the source mirrors.
 
 ## Fill your rules
 
-The mechanical setup is done. These are the parts no helper and no agent can invent, because they are your calls.
+The mechanical setup is done. These are the parts no helper can invent, because they are your calls. To answer them in chat, open a session at your root and say "fill my rules"; the rules interview asks for each one, writes it for you, and reads back every write. To fill them by hand instead, work through the list below.
 
-- **Your hard lines.** Open `hooks/git-gate.mjs` at your root and replace `<YOUR-HARD-LINES>` with the git operations an agent must never do alone (which repos it may push, whether it deploys, anything money-touching).
+- **Your hard lines.** The git operations an agent must never do alone (which repos it may push, whether it deploys, anything money-touching) go in `hooks/hard-lines.txt` at your root, in your own words; the git gate quotes them in every block message. Until the file is filled, the gate still blocks gated operations and says it is waiting.
 - **Your craft rules.** The craft globals at `Claude/CLAUDE.md` ship as a shell with `<YOUR-*>` sections; fill them with your style, commit, and gate rules. A complete worked example lives in the `examples/` folder from the download (`examples/craft-globals-example.md`), and its rule-pack for the style gate (`examples/house-rules-example.mjs`) drops into `hooks/house-rules.mjs` at your root if you want a battle-tested starting set. The constitution itself needs no editing to start.
 - **Your roles** (optional now, worth doing soon). `Agents/AGENT_ROLES.md` ships with the full council and staff charters; give each a persona name from fiction you love. A named persona binds a session to its charter better than a job title does.
 - **Your never-publish list.** Seed `deny-list.txt` next to `tools/deny-sweep.mjs` with your name, employer, internal project names, domains, and paths, so the sweep can catch them before anything goes public.
@@ -136,7 +136,7 @@ With the first project in, the day-to-day habits that pay off from here (the two
 
 ## Round out the kit
 
-The template installs the governance pieces (the onboarding skill, the four routing seats, the `/model-routing` switch). The rest of the kit this layer was built alongside ships separately as a free companion toolbox on npm. It adds a wording lint for anything about to ship, a pre-publish secrets scan, a skill that delegates a task to a cheaper model, and commands for asking another model a question, capturing exchanges verbatim, and session startup. Add exactly those pieces with one command:
+The template installs the governance pieces (the onboarding and rules-interview skills, the four routing seats, the `/model-routing` switch). The rest of the kit this layer was built alongside ships separately as a free companion toolbox on npm. It adds a wording lint for anything about to ship, a pre-publish secrets scan, a skill that delegates a task to a cheaper model, and commands for asking another model a question, capturing exchanges verbatim, and session startup. Add exactly those pieces with one command:
 
 ```bash
 npx @jayofemi/toolbox add wording gatekeeper reroute-task ask-model screenshot startup

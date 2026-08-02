@@ -1,0 +1,1 @@
+<YOUR-HARD-LINES>: replace this file's whole content with the git operations an agent must never do on its own, verbatim from your craft globals (which repos it may push, whether it deploys, anything money-touching). The git gate quotes this file in every block message. You can also state your hard lines in chat and have your agent write them here for you.

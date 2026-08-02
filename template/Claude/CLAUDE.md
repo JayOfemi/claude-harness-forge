@@ -13,7 +13,7 @@ Every session start and after every compaction: read this file, the constitution
 ## Behavior rules
 
 - **Change scope is sacred** (the constitution's headline rule): stylistic enforcement binds the lines you write or rewrite, never untouched lines around them.
-- `<YOUR-HARD-GATES>` - the operations an agent must never do on its own initiative, verbatim, one bullet each. Typical shape: which repos an agent may push (name them; everything else is commit-only), whether agents run builds and tests or the owner does, any tool that requires an explicit per-use grant. Write these as the non-negotiables they are; the git gate in the hook pack should name the same lines.
+- `<YOUR-HARD-GATES>` - the operations an agent must never do on its own initiative, verbatim, one bullet each. Typical shape: which repos an agent may push (name them; everything else is commit-only), whether agents run builds and tests or the owner does, any tool that requires an explicit per-use grant. Write these as the non-negotiables they are; mirror the same lines in `hooks/hard-lines.txt` at the root, so the git gate quotes them.
 - `<YOUR-COMMIT-DISCIPLINE>` - when agents commit, how they scope staging, what a commit is worth. A shape that works: commit your own completed work without asking, stage only your own changes by explicit path, never blanket-commit a dirty tree, keep the tree legible.
 - `<YOUR-TERMINAL-AND-PLATFORM-RULES>` - the facts about your machine agents must not guess at (shell dialect, path conventions, encoding traps). Depth belongs in `STANDARDS/agent-conduct` when you write one.
 

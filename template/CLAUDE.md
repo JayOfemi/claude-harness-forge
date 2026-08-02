@@ -18,7 +18,7 @@ Canonical root for all project knowledge in this workspace: standards, agent rol
 | `Claude/CLAUDE.md` | **Craft globals - your wording, coding style, and commit rules.** Binding on every agent, every session, alongside this constitution | ALWAYS read it: this file = how agents behave; that file = how the work is crafted |
 | `Projects/` | Project workspaces (each holds a pointer file + one or more repos) | Working a project's code |
 | `tools/` + `forge-manifest.json` | Workspace-structure tooling: the tracked composition manifest + the worktree composer | Materializing, completing, or unwinding a full workspace view (a bare root-repo worktree is an empty shell) |
-| `skills/` + `subagents/` + `commands/` | Harness-install sources: the onboarding skill, the four model-routing seats (installed to `~/.claude/agents/`), the `/model-routing` command | Installing or updating your `~/.claude` pieces (quickstart step 5) |
+| `skills/` + `subagents/` + `commands/` | Harness-install sources: the onboarding and rules-interview skills, the four model-routing seats (installed to `~/.claude/agents/`), the `/model-routing` command | Installing or updating your `~/.claude` pieces (the quickstart's install step) |
 | `Dump/` | The ONLY sanctioned dump ground; triaged periodically | You have a file with no defined home and no time to decide |
 
 If a workspace must stay out of default reach (a day job, a client's code), give it its own map row that names the exclusion and the entry condition, and add its path to the root `.ignore` excludes - the row IS the rule.

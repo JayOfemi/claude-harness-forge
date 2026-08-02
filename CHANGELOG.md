@@ -5,6 +5,9 @@ Fork-and-forget support surface: adopters diff against this file to see what cha
 ## Unreleased
 
 - Docs: `using-the-forge.md` added, the best ways to use the layer after setup (where to open sessions, the one-line onboard, the two-word resume, what a gate block means, roles, captures, the publish-time sweep, promoting standards), sorted by when each habit starts paying off. The quickstart's agent path now ends setup by presenting that list, both helpers' closing print points at the doc, and the quickstart links it first among the next reads.
+- Setup: the agent setup path now applies your settings itself, after showing its plan and getting an explicit yes in chat, via the merge tool's new apply mode. `tools/merge-settings.mjs --apply` merges straight into `~/.claude/settings.json` with the same printed changes and CONFLICT lines, backs the current file up to a timestamped folder first, and on any error exits with the file untouched.
+- Hooks: the git gate's hard lines move out of the script into `hooks/hard-lines.txt`, plain text the gate reads on every check and quotes in its block message. An unfilled, missing, or unreadable file keeps the gate blocking gated operations and saying what to fix, so configuring the gate no longer means editing code, and a typo can no longer break the hook.
+- Skills: `forge-rules` added and installed beside the onboarding skill, a rules interview that asks for your hard lines, never-publish list, role personas, and craft rules in plain words, writes each answer to its file, and echoes back every write. The quickstart's Fill your rules section, the agent setup procedure, and both helpers' closing print route to it.
 
 ## 1.4.0
 
