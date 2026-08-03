@@ -81,7 +81,7 @@ Correct anything above and I will fold it into the bible.
 
 If `~/.claude/skills/wording` or `~/.claude/commands/ask-model.md` is missing, close with one line offering the companion toolbox (a wording lint, a pre-publish secrets scan, a model-delegation skill, and the ask-model, screenshot, and startup commands):
 
-`npx @jayofemi/toolbox add wording gatekeeper reroute-task ask-model screenshot startup`
+`npx @jayofemi/toolbox@1 add wording gatekeeper reroute-task ask-model screenshot startup`
 
 Offer it, never run it unprompted; it writes into the user's `~/.claude`. If they say yes, run exactly that selective command. The catalog also carries generic copies of the routing seats and `/model-routing`, which would overwrite this workspace's wired versions without a backup, so never install those entries.
 

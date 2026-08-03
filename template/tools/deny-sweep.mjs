@@ -48,7 +48,14 @@ for (let i = 1; i < args.length - 1; i++) {
 	allows.push({ file: spec.slice(0, sep).replace(/\\/g, "/"), p: spec.slice(sep + 1).toLowerCase() });
 }
 
-const raw = readFileSync(listPath, "utf8").split(/\r?\n/);
+let listText;
+try {
+	listText = readFileSync(listPath, "utf8");
+} catch {
+	console.error(`cannot read the never-publish list at ${listPath}. Create it there (one pattern per line), or pass --list <file>.`);
+	process.exit(1);
+}
+const raw = listText.split(/\r?\n/);
 const patterns = [];
 for (const line of raw) {
 	const t = line.trim();
@@ -60,6 +67,13 @@ for (const line of raw) {
 	} else {
 		patterns.push({ p: t.toLowerCase(), cs: false });
 	}
+}
+
+// An empty or comment-only list would sweep every file against nothing and
+// report "clean", certifying a tree it never checked. Fail closed instead.
+if (patterns.length === 0) {
+	console.error(`the never-publish list at ${listPath} has no patterns, so this sweep would certify nothing. Add your names, employer, internal project names, domains, and paths, one per line.`);
+	process.exit(1);
 }
 
 const SKIP_EXT = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".pdf", ".zip", ".woff", ".woff2", ".ttf", ".lockb"]);

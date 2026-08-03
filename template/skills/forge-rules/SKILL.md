@@ -19,13 +19,13 @@ Turn the rule surfaces only the owner can decide into a short interview. You hol
 - **Never invent a rule.** Every line written comes from the owner's own words in this conversation (tightened for clarity is fine; read the tightened form back).
 - **One surface at a time**, one short plain-words question each. Skipping any surface is fine; the interview is re-runnable and picks up from whatever the files already hold.
 - **Echo every write.** After writing a file, show what it now says in a line or two.
-- Touch ONLY the files named below. Project repos are never touched.
+- Touch ONLY the files named below, plus `hooks/gated-tools.txt` when surface 1 calls for it. Project repos are never touched.
 
 ## The surfaces, in paying-off order
 
 ### 1. Hard lines -> `hooks/hard-lines.txt`
 
-Ask: which git operations must an agent never do on its own? Think pushes (which repos, if any), deploys, tags, history rewrites, anything money-touching. Replace the file's ENTIRE content with the answer, stated as short verbatim lines. The git gate quotes this file in every block message; until it is filled, the gate blocks gated operations and says it is waiting.
+Ask: which git operations must an agent never do on its own? Think pushes (which repos, if any), deploys, tags, history rewrites, anything money-touching. Replace the file's ENTIRE content with the answer, stated as short verbatim lines. The git gate quotes this file in every block message; until it is filled, the gate blocks gated operations and says it is waiting. If they name a deploy or publish tool, check `hooks/gated-tools.txt` for it and offer to add it there so the gate enforces what the line says.
 
 ### 2. Never-publish list -> `deny-list.txt` at the root
 

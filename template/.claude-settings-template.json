@@ -4,25 +4,29 @@
     "Replace every <ROOT> placeholder with the absolute path to your workspace root.",
     "Replace <YOUR-TRACKER-HUB-PATH> with the absolute path to your tracker hub (on a single-repo start this is simply <ROOT>/Claude).",
     "Replace <YOUR-USER> in the deny rules with your OS user name. The deny examples cover the common credential stores and browser profile data on Windows, macOS, and Linux together; entries for platforms you are not on match nothing and are safe to keep or trim. Deny rules use gitignore-style patterns; a leading // anchors at the filesystem root.",
+    "Scope, stated plainly: these Read(...) deny rules bind the file-reading tools, not the shell. A shell command that reads the same path still goes through the normal permission prompt, so treat the deny block as a guard against accidents rather than a boundary against a determined command.",
+    "The allow rules are deliberately narrow. Every push entry names the remote origin and every entry is scoped to one repo with -C, because a Bash allow rule is a raw PREFIX match: without the remote, a push to any URL would be auto-approved, and without -C the rule would be live in every session on the machine. Keep both when you edit them, and rename the entries if your remote is not called origin, or they will simply stop matching and you will be prompted.",
+    "What the prefix does NOT constrain, so you know the shape of the residual: anything after the matched prefix is unconstrained, so a destructive push to that same remote (--force, --delete, --mirror) still matches the rule, as does a remote whose name merely starts with origin. The git gate is the layer that catches those, since a PreToolUse hook blocks whatever the permission rules say. Treat the two as a pair, and add explicit deny rules for any shape that must be impossible rather than merely gated.",
     "The Stop hook passes the write-back gate its two paths via env vars on the command line - filling THIS file configures that gate completely; the script-level placeholders are a backstop only.",
-    "The git gate lives at hooks/git-gate.mjs and fails closed; it quotes your hard lines from hooks/hard-lines.txt, so put your push and commit constraints in that file (or let the rules interview write them for you).",
+    "The git gate lives at hooks/git-gate.mjs and fails closed; it quotes your hard lines from hooks/hard-lines.txt, so put your push and commit constraints in that file (or let the rules interview write them for you). Its non-git coverage (deploy CLIs, package publishes, cloud mutations) reads from hooks/gated-tools.txt, shipped with generic defaults you can trim or extend.",
     "The env block caps runaway loops. The harness defaults are 200 subagent spawns and 200 web searches per session; the template ships 25 spawns, 50 searches, 10 concurrent subagents, and a spawn depth of 1. Raise them per-session for a sanctioned big run ($env:CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION = '100' before launching) instead of raising the standing cap.",
-    "The CLAUDE_REVIEWED allow rules let a git command the git gate blocked, once verified and re-issued with that prefix, run without a second permission prompt.",
+    "The CLAUDE_REVIEWED allow rules let a git command the git gate blocked, once verified and re-issued with that prefix, run without a second permission prompt. The re-issued command has to match one of these entries to skip the prompt, so keep the -C <repo> scope in it; the gate's own block message prints the exact shape.",
     "The directory gate warns when a folder added mid-session (/add-dir) is one of your excluded workspaces, and re-states the rule layers when it is outside your root; list your excluded paths in hooks/dir-added-gate.mjs.",
     "The reply gate enforces a prose-length ceiling on each turn's final reply (default 300 words; REPLY_GATE_MAX_WORDS overrides). It blocks once with exact findings, then always passes the revision.",
     "The token reporter prints each turn's full token spend (subagents included) as a systemMessage line and appends a daily JSONL ledger under ~/.claude/token-ledger/. The token handoff surfaces the previous turn's cost inside the next reply, for hosts that do not render systemMessage output; if your host renders it, the handoff is optional.",
     "Premium-tier subagent spawns run without an approval prompt by default; add an ask rule (for example Agent(model:opus)) per premium tier if you want one - the env caps below bound the runaway class either way.",
     "The hooks block is the governance wiring; preference settings regenerate from use.",
-    "The git gate's command detection is regex-based and best-effort - a speed bump, not a security boundary; pair it with permission rules for anything that must be impossible.",
+    "The git gate's command detection parses the command line (quotes, shell separators, wrapper forms, git's global options) and is best-effort - a speed bump, not a security boundary; pair it with permission rules for anything that must be impossible.",
     "Remove the _instructions key before deploying."
   ],
   "permissions": {
     "allow": [
-      "Bash(git -C <YOUR-TRACKER-HUB-PATH> push:*)",
-      "Bash(git -C <ROOT> push:*)",
-      "Bash(CLAUDE_REVIEWED=1 git commit:*)",
-      "Bash(CLAUDE_REVIEWED=1 git -C <YOUR-TRACKER-HUB-PATH> push:*)",
-      "Bash(CLAUDE_REVIEWED=1 git -C <ROOT> push:*)"
+      "Bash(git -C <YOUR-TRACKER-HUB-PATH> push origin:*)",
+      "Bash(git -C <ROOT> push origin:*)",
+      "Bash(CLAUDE_REVIEWED=1 git -C <YOUR-TRACKER-HUB-PATH> commit:*)",
+      "Bash(CLAUDE_REVIEWED=1 git -C <ROOT> commit:*)",
+      "Bash(CLAUDE_REVIEWED=1 git -C <YOUR-TRACKER-HUB-PATH> push origin:*)",
+      "Bash(CLAUDE_REVIEWED=1 git -C <ROOT> push origin:*)"
     ],
     "deny": [
       "Read(//c/Users/<YOUR-USER>/AppData/Roaming/Microsoft/Credentials/**)",
@@ -90,11 +94,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node <ROOT>/hooks/intake-nudge.mjs"
+            "command": "node \"<ROOT>/hooks/intake-nudge.mjs\""
           },
           {
             "type": "command",
-            "command": "node <ROOT>/hooks/token-handoff.mjs"
+            "command": "node \"<ROOT>/hooks/token-handoff.mjs\""
           }
         ]
       }
@@ -104,15 +108,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "WRITEBACK_HUB='<YOUR-TRACKER-HUB-PATH>' WRITEBACK_ROOT='<ROOT>' node <ROOT>/hooks/writeback-gate.mjs"
+            "command": "WRITEBACK_HUB='<YOUR-TRACKER-HUB-PATH>' WRITEBACK_ROOT='<ROOT>' node \"<ROOT>/hooks/writeback-gate.mjs\""
           },
           {
             "type": "command",
-            "command": "node <ROOT>/hooks/reply-gate.mjs"
+            "command": "node \"<ROOT>/hooks/reply-gate.mjs\""
           },
           {
             "type": "command",
-            "command": "node <ROOT>/hooks/token-report.mjs"
+            "command": "node \"<ROOT>/hooks/token-report.mjs\""
           }
         ]
       }
@@ -123,7 +127,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node <ROOT>/hooks/git-gate.mjs"
+            "command": "node \"<ROOT>/hooks/git-gate.mjs\""
           }
         ]
       }
@@ -134,7 +138,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node <ROOT>/hooks/style-gate.mjs"
+            "command": "node \"<ROOT>/hooks/style-gate.mjs\""
           }
         ]
       }
@@ -144,7 +148,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node <ROOT>/hooks/config-tripwire.mjs"
+            "command": "node \"<ROOT>/hooks/config-tripwire.mjs\""
           }
         ]
       }
@@ -154,7 +158,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node <ROOT>/hooks/dir-added-gate.mjs"
+            "command": "node \"<ROOT>/hooks/dir-added-gate.mjs\""
           }
         ]
       }
@@ -164,7 +168,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node <ROOT>/hooks/instructions-audit.mjs"
+            "command": "node \"<ROOT>/hooks/instructions-audit.mjs\""
           }
         ]
       }

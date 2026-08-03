@@ -78,7 +78,7 @@ if [ "$ALREADY_FORGE" -eq 1 ]; then
 	step "root is already a Forge, refreshing the harness pieces and settings without re-copying (your filled-in files stay)"
 	# New-in-a-later-release template files an older root lacks: add them when
 	# absent (a filled-in copy is never touched), so the closing steps stay true.
-	for rel in "hooks/hard-lines.txt" "skills/forge-rules"; do
+	for rel in "hooks/hard-lines.txt" "hooks/gated-tools.txt" "skills/forge-rules"; do
 		if [ -e "$TEMPLATE_DIR/$rel" ] && [ ! -e "$ROOT_ABS/$rel" ]; then
 			mkdir -p "$(dirname "$ROOT_ABS/$rel")"
 			cp -R "$TEMPLATE_DIR/$rel" "$ROOT_ABS/$rel"
@@ -90,6 +90,10 @@ if [ "$ALREADY_FORGE" -eq 1 ]; then
 	if [ -f "$ROOT_ABS/hooks/git-gate.mjs" ] && grep -qF "The hard lines: <YOUR-HARD-LINES>" "$ROOT_ABS/hooks/git-gate.mjs"; then
 		cp "$TEMPLATE_DIR/hooks/git-gate.mjs" "$ROOT_ABS/hooks/git-gate.mjs"
 		step "updated hooks/git-gate.mjs (it was unconfigured; hard lines now live in hooks/hard-lines.txt)"
+	elif [ -f "$ROOT_ABS/hooks/git-gate.mjs" ] && ! cmp -s "$TEMPLATE_DIR/hooks/git-gate.mjs" "$ROOT_ABS/hooks/git-gate.mjs"; then
+		# A resident gate is never overwritten, since it may carry the adopter's
+		# edits or just be an earlier release. Name both and let them pick.
+		warn "your hooks/git-gate.mjs differs from this release's and was left as is (it is either an earlier release or carries your own edits). To take the newer detection, replace it with $TEMPLATE_DIR/hooks/git-gate.mjs; your hard lines stay in hooks/hard-lines.txt and are not affected."
 	fi
 else
 	step "copying the template into the root"
@@ -249,7 +253,7 @@ say "  3. Craft rules: fill the <YOUR-*> sections in Claude/CLAUDE.md. A worked"
 say "     example lives in the examples/ folder from the download (beside template/)."
 say "  4. Roles: name the personas in Agents/AGENT_ROLES.md (optional now)."
 say "  5. Never-publish list: seed deny-list.txt with your names, employer, and paths."
-say "  6. Optional, the rest of the kit: npx @jayofemi/toolbox add wording gatekeeper reroute-task ask-model screenshot startup"
+say "  6. Optional, the rest of the kit: npx @jayofemi/toolbox@1 add wording gatekeeper reroute-task ask-model screenshot startup"
 say "     (companion skills and commands; the seats and /model-routing installed above stay the template's)"
 if [ -d "$BACKUP_DIR" ]; then
 	say ""

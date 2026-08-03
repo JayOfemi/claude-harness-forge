@@ -43,7 +43,7 @@ The agent follows the procedure below: it confirms the root with you before touc
 
 This section is written for the agent running that request. If you are a person, it is also a plain description of what the agent is about to do.
 
-1. **Confirm the root.** Restate the target root back to the user in one line before touching anything. If they did not give one, use the default, a `Forge` folder in their home folder, and name that path in the restatement.
+1. **Confirm the root, and check the prerequisites.** Restate the target root back to the user in one line before touching anything. If they did not give one, use the default, a `Forge` folder in their home folder, and name that path in the restatement. Check that `node --version` and `git --version` both answer: without Node the enforcement hooks cannot run, so stop and point at nodejs.org rather than building a workspace that cannot enforce anything; a missing git is worth saying out loud but is not a blocker.
 2. **Copy the template.** Copy the contents of `template/` into the root so `CLAUDE.md` lands at the root. Do not restyle or "improve" any template file while copying; this layer's headline rule is that you touch only what you were asked to touch.
 3. **Initialize git.** Run `git init -b main` in the root and make the first commit. If git is missing or the commit fails for lack of an identity, say so and move on; it is not a blocker.
 4. **Install the harness pieces.** Copy each folder in `skills/` into `~/.claude/skills/` (the project onboarder and the rules interview), the `subagents/*.md` files into `~/.claude/agents/`, and `commands/*.md` into `~/.claude/commands/`.
@@ -115,10 +115,10 @@ Prefer to do it yourself. These are the same mechanical steps the helper runs.
 
 The mechanical setup is done. These are the parts no helper can invent, because they are your calls. To answer them in chat, open a session at your root and say "fill my rules"; the rules interview asks for each one, writes it for you, and reads back every write. To fill them by hand instead, work through the list below.
 
-- **Your hard lines.** The git operations an agent must never do alone (which repos it may push, whether it deploys, anything money-touching) go in `hooks/hard-lines.txt` at your root, in your own words; the git gate quotes them in every block message. Until the file is filled, the gate still blocks gated operations and says it is waiting.
+- **Your hard lines.** The git operations an agent must never do alone (which repos it may push, whether it deploys, anything money-touching) go in `hooks/hard-lines.txt` at your root, in your own words; the git gate quotes them in every block message. Until the file is filled, the gate still blocks gated operations and says it is waiting. The gate also watches non-git shipping surfaces (deploy and publish CLIs) through `hooks/gated-tools.txt`, which ships with generic defaults you can trim or extend.
 - **Your craft rules.** The craft globals at `Claude/CLAUDE.md` ship as a shell with `<YOUR-*>` sections; fill them with your style, commit, and gate rules. A complete worked example lives in the `examples/` folder from the download (`examples/craft-globals-example.md`), and its rule-pack for the style gate (`examples/house-rules-example.mjs`) drops into `hooks/house-rules.mjs` at your root if you want a battle-tested starting set. The constitution itself needs no editing to start.
 - **Your roles** (optional now, worth doing soon). `Agents/AGENT_ROLES.md` ships with the full council and staff charters; give each a persona name from fiction you love. A named persona binds a session to its charter better than a job title does.
-- **Your never-publish list.** Seed `deny-list.txt` next to `tools/deny-sweep.mjs` with your name, employer, internal project names, domains, and paths, so the sweep can catch them before anything goes public.
+- **Your never-publish list.** Seed `deny-list.txt` at your root with your name, employer, internal project names, domains, and paths, so the sweep can catch them before anything goes public. With no patterns in it the sweep refuses to run rather than reporting a clean tree it never checked.
 
 The full replacement order, and what not to customize early, is in [`customize-first.md`](customize-first.md).
 
@@ -135,7 +135,7 @@ With the first project in, the day-to-day habits that pay off from here (the two
 The template installs the governance pieces (the onboarding and rules-interview skills, the four routing seats, the `/model-routing` switch). The rest of the kit this layer was built alongside ships separately as a free companion toolbox on npm. It adds a wording lint for anything about to ship, a pre-publish secrets scan, a skill that delegates a task to a cheaper model, and commands for asking another model a question, capturing exchanges verbatim, and session startup. Add exactly those pieces with one command:
 
 ```bash
-npx @jayofemi/toolbox add wording gatekeeper reroute-task ask-model screenshot startup
+npx @jayofemi/toolbox@1 add wording gatekeeper reroute-task ask-model screenshot startup
 ```
 
 Run `npx @jayofemi/toolbox list` to see the catalog, or run it bare for an interactive picker. One caution if you pick by hand. The catalog also carries its own generic copies of the routing seats and `/model-routing`; the template's copies are the ones wired to your standards bank, and the toolbox overwrites without a backup, so leave those entries to the template.

@@ -1,0 +1,42 @@
+# Non-git tools the git gate also stops for review. One entry per line;
+# everything after a # is a comment. Two shapes:
+#   <cli>               every invocation is gated (deploy CLIs)
+#   <cli>: word word    gated only when an argument equals one of the words
+# Matching is by exact argument token and deliberately coarse; this file is
+# a speed bump for "an agent is about to ship or destroy something", not a
+# sandbox. The gate always covers git itself, with or without this file.
+# Entries for tools you do not have installed match nothing and are safe to
+# keep. Trim what you like, add your own stack's tools. An empty or deleted
+# file means the gate covers git only.
+
+# Deploy CLIs: any invocation is a shipping surface.
+vercel
+netlify
+firebase
+flyctl
+fly
+heroku
+surge
+swa
+twine
+
+# Package publishing and registry state.
+npm: publish unpublish version deprecate dist-tag owner access adduser login token deploy release
+pnpm: publish unpublish deploy release
+yarn: publish deploy release
+bun: publish deploy release
+
+# Containers and clusters.
+docker: push
+kubectl: apply delete create rollout scale
+
+# Repo-hosting CLI, gated on its mutating words; reads pass untouched.
+gh: merge create close delete edit rerun cancel secret variable release ready
+
+# Cloud CLIs, gated on their mutating words.
+az: deploy create delete update restart publish set
+aws: deploy create delete update put sync
+gcloud: deploy create delete update
+
+# Mobile release tooling.
+eas: submit update

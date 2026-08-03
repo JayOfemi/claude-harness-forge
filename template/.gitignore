@@ -1,0 +1,8 @@
+# Machine-specific and private files setup creates in this root. They map your
+# paths or list what must never be published, so they stay out of git.
+settings.generated.json
+settings.*.tmp.json
+deny-list.txt
+forge-setup-backup-*/
+node_modules/
+*.log

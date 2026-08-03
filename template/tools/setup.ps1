@@ -100,7 +100,7 @@ if ($AlreadyForge) {
 	Step "root is already a Forge, refreshing the harness pieces and settings without re-copying (your filled-in files stay)"
 	# New-in-a-later-release template files an older root lacks: add them when
 	# absent (a filled-in copy is never touched), so the closing steps stay true.
-	foreach ($rel in @("hooks/hard-lines.txt", "skills/forge-rules")) {
+	foreach ($rel in @("hooks/hard-lines.txt", "hooks/gated-tools.txt", "skills/forge-rules")) {
 		$src = Join-Path $TemplateDir $rel
 		$dst = Join-Path $RootAbs $rel
 		if ((Test-Path -LiteralPath $src) -and -not (Test-Path -LiteralPath $dst)) {
@@ -112,9 +112,14 @@ if ($AlreadyForge) {
 	# An older gate still carrying the inline placeholder holds nothing of the
 	# adopter's, so it is safe to swap for the version that reads the data file.
 	$gate = Join-Path $RootAbs "hooks/git-gate.mjs"
+	$templateGate = Join-Path $TemplateDir "hooks/git-gate.mjs"
 	if ((Test-Path -LiteralPath $gate) -and (Select-String -LiteralPath $gate -Pattern "The hard lines: <YOUR-HARD-LINES>" -SimpleMatch -Quiet)) {
-		Copy-Item -LiteralPath (Join-Path $TemplateDir "hooks/git-gate.mjs") -Destination $gate -Force
+		Copy-Item -LiteralPath $templateGate -Destination $gate -Force
 		Step "updated hooks/git-gate.mjs (it was unconfigured; hard lines now live in hooks/hard-lines.txt)"
+	} elseif ((Test-Path -LiteralPath $gate) -and ((Get-FileHash -LiteralPath $gate -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $templateGate -Algorithm SHA256).Hash)) {
+		# A resident gate is never overwritten, since it may carry the adopter's
+		# edits or just be an earlier release. Name both and let them pick.
+		Warn "your hooks/git-gate.mjs differs from this release's and was left as is (it is either an earlier release or carries your own edits). To take the newer detection, replace it with $templateGate; your hard lines stay in hooks/hard-lines.txt and are not affected."
 	}
 } else {
 	Step "copying the template into the root"
@@ -315,7 +320,7 @@ Say "  3. Craft rules: fill the <YOUR-*> sections in Claude/CLAUDE.md. A worked"
 Say "     example lives in the examples/ folder from the download (beside template/)."
 Say "  4. Roles: name the personas in Agents/AGENT_ROLES.md (optional now)."
 Say "  5. Never-publish list: seed deny-list.txt with your names, employer, and paths."
-Say "  6. Optional, the rest of the kit: npx @jayofemi/toolbox add wording gatekeeper reroute-task ask-model screenshot startup"
+Say "  6. Optional, the rest of the kit: npx @jayofemi/toolbox@1 add wording gatekeeper reroute-task ask-model screenshot startup"
 Say "     (companion skills and commands; the seats and /model-routing installed above stay the template's)"
 if ($script:BackedUp) {
 	Say ""
